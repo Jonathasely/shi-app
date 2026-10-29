@@ -14,6 +14,12 @@ export interface Perfume {
   name: string;
   brand: string;
   accords: Accord[];
+  emoji?: string;
+  notes?: {
+    top: string[];
+    mid: string[];
+    base: string[];
+  };
 }
 
 export interface Base {
@@ -138,6 +144,30 @@ export function findBestBase(
     profile_description: profileDescription,
     top_accords: topAccords,
   };
+}
+
+/**
+ * Return the top N matching bases, scored and sorted.
+ */
+export function findTopBases(
+  selectedPerfumes: Perfume[],
+  bases: Base[],
+  eventBaseIds?: string[],
+  count: number = 3
+): { base: Base; score: number }[] {
+  const userProfile = buildAccordProfile(selectedPerfumes);
+  const availableBases =
+    eventBaseIds && eventBaseIds.length > 0
+      ? bases.filter((b) => eventBaseIds.includes(b.id))
+      : bases;
+
+  return availableBases
+    .map((base) => ({
+      base,
+      score: cosineSimilarity(userProfile, baseToVector(base)),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, count);
 }
 
 /**
