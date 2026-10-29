@@ -15,9 +15,9 @@ const C = {
   alt: "#F0EDE8",
   border: "#E0DFDE",
   dark: "#2D2B29",
-  g1: "#4A4845",
-  g2: "#898888",
-  g3: "#AEADAC",
+  g1: "#3D3B38",
+  g2: "#6B6A69",
+  g3: "#8A8988",
   g4: "#C8C6C5",
   g5: "#E0DFDE",
 };
@@ -178,6 +178,7 @@ const DEFAULT_LINE2 = "DESCUBRA QUAL FRAGRÂNCIA SHI COMBINA COM VOCÊ!";
 
 /* ─── CSS animations (injected once) ──────────────────────── */
 const animCSS = `
+html,body{background:${C.bg}}
 @keyframes shi-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @keyframes shi-spinR{from{transform:rotate(360deg)}to{transform:rotate(0)}}
 @keyframes shi-fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -397,9 +398,11 @@ export default function EventoPage() {
     go("welcome");
   };
 
-  /* ── frame (mobile fullscreen) ───────────────────────── */
+  /* ── frame (mobile fullscreen, max-width for large screens) */
   const frame: React.CSSProperties = {
     width: "100%",
+    maxWidth: 600,
+    margin: "0 auto",
     minHeight: "100vh",
     background: C.bg,
     display: "flex",
@@ -1047,15 +1050,13 @@ export default function EventoPage() {
                   Resultado do seu perfil olfativo
                 </div>
 
-                {/* Main result card with corners */}
+                {/* Main result card with corners — no fill */}
                 <div
                   style={{
-                    border: `1px solid ${C.border}`,
                     padding: "24px 16px",
                     textAlign: "center",
                     position: "relative",
                     marginBottom: 14,
-                    background: C.white,
                   }}
                 >
                   <Corners />
@@ -1165,7 +1166,6 @@ export default function EventoPage() {
                             textAlign: "center",
                             padding: "14px 8px",
                             border: `1px solid ${C.g5}`,
-                            background: C.white,
                           }}
                         >
                           <div
@@ -1259,10 +1259,8 @@ export default function EventoPage() {
               >
                 <div
                   style={{
-                    border: `1px solid ${C.border}`,
                     padding: "32px 18px 24px",
                     position: "relative",
-                    background: C.white,
                   }}
                 >
                   <Corners />
