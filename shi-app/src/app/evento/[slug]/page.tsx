@@ -1327,7 +1327,37 @@ export default function EventoPage() {
 
                 {/* Buttons */}
                 <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
-                  <button style={{ ...btnS, flex: 1, fontSize: 10, letterSpacing: 1.5 }}>
+                  <button
+                    onClick={async () => {
+                      const mainBase = results[0]?.base;
+                      const text = [
+                        `🪄 Meu Passaporte Olfativo — ${event.name}`,
+                        "",
+                        `Meu perfil: ${mainBase?.name}`,
+                        `Fragrância: ${formatBaseCode(mainBase?.code || "")}`,
+                        "",
+                        `Perfumes escolhidos: ${slots.filter(Boolean).map((p) => p!.name).join(", ")}`,
+                        "",
+                        "Descubra o seu em shi.com.br 🌸",
+                      ].join("\n");
+
+                      if (navigator.share) {
+                        try {
+                          await navigator.share({ title: "Passaporte Olfativo SHI", text });
+                        } catch {
+                          /* user cancelled */
+                        }
+                      } else {
+                        try {
+                          await navigator.clipboard.writeText(text);
+                          alert("Copiado! Cole onde quiser compartilhar.");
+                        } catch {
+                          /* fallback: do nothing */
+                        }
+                      }
+                    }}
+                    style={{ ...btnS, flex: 1, fontSize: 10, letterSpacing: 1.5 }}
+                  >
                     Compartilhar
                   </button>
                   <button onClick={reset} style={{ ...btnS, flex: 1, fontSize: 10, letterSpacing: 1.5 }}>
