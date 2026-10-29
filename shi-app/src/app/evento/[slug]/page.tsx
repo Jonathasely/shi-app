@@ -130,6 +130,34 @@ function Divider() {
   return <div style={{ width: 36, height: 0.5, background: C.g4, margin: "0 auto" }} />;
 }
 
+/** Corner decoration for cards */
+function Corners() {
+  return (
+    <>
+      {[
+        { top: 0, left: 0 },
+        { top: 0, right: 0 },
+        { bottom: 0, left: 0 },
+        { bottom: 0, right: 0 },
+      ].map((pos, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            ...pos,
+            width: 14,
+            height: 14,
+            borderTop: "top" in pos && pos.top === 0 ? `1.5px solid ${C.g3}` : "none",
+            borderBottom: "bottom" in pos && pos.bottom === 0 ? `1.5px solid ${C.g3}` : "none",
+            borderLeft: "left" in pos && pos.left === 0 ? `1.5px solid ${C.g3}` : "none",
+            borderRight: "right" in pos && pos.right === 0 ? `1.5px solid ${C.g3}` : "none",
+          } as React.CSSProperties}
+        />
+      ))}
+    </>
+  );
+}
+
 /* ─── Event types ──────────────────────────────────────────── */
 interface EventData {
   id: string;
@@ -138,9 +166,15 @@ interface EventData {
   password: string;
   status: string;
   selected_bases: string[];
+  welcome_line1?: string;
+  welcome_line2?: string;
 }
 
 type Screen = "welcome" | "register" | "search" | "analyzing" | "result" | "passport";
+
+/* ─── Default texts ───────────────────────────────────────── */
+const DEFAULT_LINE1 = "EXPERIÊNCIA OLFATIVA GUIADA POR INTELIGÊNCIA ARTIFICIAL";
+const DEFAULT_LINE2 = "DESCUBRA QUAL FRAGRÂNCIA SHI COMBINA COM VOCÊ!";
 
 /* ─── CSS animations (injected once) ──────────────────────── */
 const animCSS = `
@@ -167,12 +201,13 @@ export default function EventoPage() {
   const [evtPass, setEvtPass] = useState("");
   const [evtErr, setEvtErr] = useState(false);
 
-  // Register — 4 fields
+  // Register — 4 fields + checkbox
   const [formName, setFormName] = useState("");
   const [formSurname, setFormSurname] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formMkt, setFormMkt] = useState(false);
+  const [formMktErr, setFormMktErr] = useState(false);
 
   // Search
   const [slots, setSlots] = useState<(Perfume | null)[]>([null, null, null]);
@@ -218,6 +253,8 @@ export default function EventoPage() {
         setEvent({
           ...data,
           selected_bases: Array.isArray(data.selected_bases) ? data.selected_bases : [],
+          welcome_line1: data.welcome_line1 || undefined,
+          welcome_line2: data.welcome_line2 || undefined,
         });
       }
       setLoading(false);
@@ -297,6 +334,16 @@ export default function EventoPage() {
     setSlots(ns);
   };
 
+  const handleRegister = () => {
+    if (!formName.trim() || !formSurname.trim() || !formEmail.trim() || !formPhone.trim()) return;
+    if (!formMkt) {
+      setFormMktErr(true);
+      return;
+    }
+    setFormMktErr(false);
+    go("search");
+  };
+
   const analyze = useCallback(async () => {
     const selected = slots.filter(Boolean) as Perfume[];
     if (selected.length !== 3 || bases.length === 0) return;
@@ -344,6 +391,7 @@ export default function EventoPage() {
     setFormEmail("");
     setFormPhone("");
     setFormMkt(false);
+    setFormMktErr(false);
     setResults([]);
     setProfileResult(null);
     go("welcome");
@@ -384,6 +432,10 @@ export default function EventoPage() {
     );
   }
 
+  /* ── Welcome screen texts (admin-editable) ──────────── */
+  const welcomeLine1 = event.welcome_line1 || DEFAULT_LINE1;
+  const welcomeLine2 = event.welcome_line2 || DEFAULT_LINE2;
+
   return (
     <div style={frame}>
       <style dangerouslySetInnerHTML={{ __html: animCSS }} />
@@ -414,41 +466,39 @@ export default function EventoPage() {
                 padding: "16px 8px",
               }}
             >
-              <div style={{ fontSize: 10, letterSpacing: 4, color: C.g3, textTransform: "uppercase", marginBottom: 8 }}>
-                Experiência Olfativa
-              </div>
+              <Logo size="lg" />
+
               <div
                 style={{
-                  fontFamily: serif,
-                  fontSize: 20,
-                  color: C.g1,
-                  fontWeight: 400,
-                  lineHeight: 1.4,
-                  marginBottom: 16,
-                }}
-              >
-                {event.name}
-              </div>
-              <Divider />
-              <div style={{ margin: "24px 0" }}>
-                <Logo size="lg" />
-              </div>
-              <div
-                style={{
-                  fontSize: 13,
+                  fontSize: 9,
+                  letterSpacing: 3,
                   color: C.g2,
-                  lineHeight: 1.8,
-                  maxWidth: 240,
-                  marginBottom: 28,
+                  textTransform: "uppercase",
+                  lineHeight: 2,
+                  marginTop: 28,
+                  marginBottom: 24,
+                  maxWidth: 220,
                   fontWeight: 300,
                 }}
               >
-                Descubra qual fragrância
-                <br />
-                combina com você
+                {welcomeLine1}
               </div>
+
+              <div
+                style={{
+                  fontFamily: serif,
+                  fontSize: 22,
+                  color: C.dark,
+                  fontWeight: 600,
+                  lineHeight: 1.4,
+                  maxWidth: 280,
+                  marginBottom: 32,
+                }}
+              >
+                {welcomeLine2}
+              </div>
+
               <div style={{ width: "100%", maxWidth: 260, marginBottom: 16 }}>
-                <div style={lbl}>Senha do evento</div>
                 <input
                   type="text"
                   inputMode="text"
@@ -456,7 +506,7 @@ export default function EventoPage() {
                   autoCorrect="off"
                   autoCapitalize="characters"
                   spellCheck={false}
-                  placeholder="Digite a senha"
+                  placeholder="DIGITE A SENHA"
                   value={evtPass}
                   onChange={(e) => {
                     setEvtPass(e.target.value);
@@ -470,6 +520,7 @@ export default function EventoPage() {
                     textAlign: "center",
                     letterSpacing: 4,
                     textTransform: "uppercase",
+                    fontSize: 13,
                   }}
                 />
                 {evtErr && (
@@ -486,19 +537,8 @@ export default function EventoPage() {
           {screen === "register" && (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 0 24px" }}>
               <Dots current={0} total={4} />
-              <div style={{ textAlign: "center", marginBottom: 24 }}>
-                <Logo size="sm" />
-                <div
-                  style={{
-                    marginTop: 14,
-                    fontFamily: serif,
-                    fontSize: 22,
-                    color: C.dark,
-                    fontWeight: 400,
-                  }}
-                >
-                  Queremos te conhecer
-                </div>
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <Logo size="md" />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
                 <div>
@@ -506,7 +546,7 @@ export default function EventoPage() {
                   <input
                     type="text"
                     autoComplete="given-name"
-                    placeholder="Como podemos te chamar?"
+                    placeholder="Seu nome"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     style={inp}
@@ -528,7 +568,7 @@ export default function EventoPage() {
                   <input
                     type="email"
                     autoComplete="email"
-                    placeholder="seu@email.com"
+                    placeholder="Seu e-mail"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     style={inp}
@@ -539,33 +579,37 @@ export default function EventoPage() {
                   <input
                     type="tel"
                     autoComplete="tel"
-                    placeholder="(00) 00000-0000"
+                    placeholder="Seu telefone"
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
                     style={inp}
                   />
                 </div>
               </div>
-              <div style={{ fontSize: 10, color: C.g3, lineHeight: 1.7, marginTop: 16 }}>
-                Seus dados registram sua experiência e perfil olfativo.
-              </div>
               <div
-                onClick={() => setFormMkt(!formMkt)}
+                onClick={() => {
+                  setFormMkt(!formMkt);
+                  setFormMktErr(false);
+                }}
                 style={{
                   display: "flex",
                   gap: 10,
                   alignItems: "flex-start",
                   cursor: "pointer",
-                  padding: "12px 0",
+                  padding: "14px 0",
                 }}
               >
                 <div
                   style={{
-                    width: 16,
-                    height: 16,
+                    width: 18,
+                    height: 18,
                     flexShrink: 0,
                     marginTop: 1,
-                    border: formMkt ? `1.5px solid ${C.dark}` : `1.5px solid ${C.g4}`,
+                    border: formMktErr
+                      ? "1.5px solid #B85C4D"
+                      : formMkt
+                      ? `1.5px solid ${C.dark}`
+                      : `1.5px solid ${C.g4}`,
                     background: formMkt ? C.dark : "transparent",
                     display: "flex",
                     alignItems: "center",
@@ -575,16 +619,17 @@ export default function EventoPage() {
                 >
                   {formMkt && <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>✓</span>}
                 </div>
-                <div style={{ fontSize: 11, color: C.g2, lineHeight: 1.5 }}>
-                  Quero receber novidades e experiências da SHI.
+                <div style={{ fontSize: 11, color: formMktErr ? "#B85C4D" : C.g2, lineHeight: 1.5 }}>
+                  Aceito receber comunicações, novidades e experiências exclusivas da SHI Aroma Lab por e-mail, SMS ou WhatsApp. *
                 </div>
               </div>
+              {formMktErr && (
+                <div style={{ fontSize: 11, color: "#B85C4D", marginBottom: 8, marginTop: -4 }}>
+                  Para continuar, é necessário aceitar o recebimento de comunicações.
+                </div>
+              )}
               <button
-                onClick={() => {
-                  if (formName.trim() && formSurname.trim() && formEmail.trim() && formPhone.trim()) {
-                    go("search");
-                  }
-                }}
+                onClick={handleRegister}
                 style={{
                   ...btnP,
                   marginTop: 4,
@@ -605,7 +650,7 @@ export default function EventoPage() {
                 <div
                   style={{
                     fontFamily: serif,
-                    fontSize: 18,
+                    fontSize: 20,
                     color: C.dark,
                     fontWeight: 400,
                     lineHeight: 1.4,
@@ -613,9 +658,9 @@ export default function EventoPage() {
                     letterSpacing: 1,
                   }}
                 >
-                  Escolha seus perfumes
+                  Quais seus perfumes preferidos?
                 </div>
-                <div style={{ fontSize: 12, color: C.g2, marginTop: 8, fontWeight: 300 }}>
+                <div style={{ fontSize: 13, color: C.g2, marginTop: 8, fontWeight: 300, lineHeight: 1.5 }}>
                   Selecione exatamente 3 fragrâncias que você ama
                 </div>
               </div>
@@ -665,10 +710,9 @@ export default function EventoPage() {
                         >
                           <span style={{ color: "#fff", fontSize: 9, fontWeight: 700 }}>✕</span>
                         </div>
-                        <div style={{ fontSize: 22, marginBottom: 4 }}>{s.emoji || "🌸"}</div>
                         <div
                           style={{
-                            fontSize: 10,
+                            fontSize: 11,
                             color: C.dark,
                             fontWeight: 500,
                             textAlign: "center",
@@ -677,7 +721,7 @@ export default function EventoPage() {
                         >
                           {s.name}
                         </div>
-                        <div style={{ fontSize: 8, color: C.g2, textAlign: "center", marginTop: 2 }}>
+                        <div style={{ fontSize: 9, color: C.g2, textAlign: "center", marginTop: 3 }}>
                           {s.brand}
                         </div>
                       </>
@@ -797,7 +841,7 @@ export default function EventoPage() {
                             flexShrink: 0,
                           }}
                         >
-                          <span style={{ fontSize: 18 }}>{p.emoji || p.name[0]}</span>
+                          <span style={{ fontSize: 13, color: C.g1, fontWeight: 500 }}>{p.name[0]}</span>
                         </div>
                         <div>
                           <div style={{ fontSize: 13, color: C.dark }}>{p.name}</div>
@@ -814,25 +858,32 @@ export default function EventoPage() {
                 </div>
               )}
 
-              {/* Notes section */}
+              {/* Notes section — centered, no emojis */}
               {filledCount > 0 && activeSlot < 0 && (
-                <div style={{ borderTop: `0.5px solid ${C.border}`, paddingTop: 12, marginBottom: 12 }}>
+                <div
+                  style={{
+                    borderTop: `0.5px solid ${C.border}`,
+                    paddingTop: 14,
+                    marginBottom: 12,
+                    textAlign: "center",
+                  }}
+                >
                   <div
                     style={{
                       fontSize: 10,
                       letterSpacing: 2,
                       color: C.g2,
                       textTransform: "uppercase",
-                      marginBottom: 8,
+                      marginBottom: 10,
                     }}
                   >
                     Notas dos seus perfumes
                   </div>
                   {(["top", "mid", "base"] as const).map((tier) => {
                     const names: Record<string, string> = {
-                      top: "Topo 🌿",
-                      mid: "Coração ❤️",
-                      base: "Base 🪵",
+                      top: "TOPO",
+                      mid: "CORAÇÃO",
+                      base: "BASE",
                     };
                     const allN = [
                       ...new Set(
@@ -843,19 +894,20 @@ export default function EventoPage() {
                     ];
                     if (!allN.length) return null;
                     return (
-                      <div key={tier} style={{ marginBottom: 6 }}>
+                      <div key={tier} style={{ marginBottom: 8 }}>
                         <div
                           style={{
                             fontSize: 9,
                             color: C.g3,
-                            letterSpacing: 1.5,
+                            letterSpacing: 2,
                             textTransform: "uppercase",
-                            marginBottom: 4,
+                            marginBottom: 5,
+                            fontWeight: 500,
                           }}
                         >
                           {names[tier]}
                         </div>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "center" }}>
                           {allN.map((n, i) => (
                             <span
                               key={i}
@@ -887,7 +939,7 @@ export default function EventoPage() {
                     style={{ ...btnP, opacity: filledCount === 3 ? 1 : 0.4 }}
                     disabled={filledCount !== 3}
                   >
-                    Descobrir meu perfil
+                    Descobrir meu perfil olfativo
                   </button>
                   {filledCount < 3 && (
                     <div style={{ textAlign: "center", fontSize: 10, color: C.g3, marginTop: 6 }}>
@@ -977,6 +1029,11 @@ export default function EventoPage() {
             <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 0 24px" }}>
               <Dots current={2} total={4} />
               <div style={{ animation: "shi-fadeUp .6s ease", flex: 1, display: "flex", flexDirection: "column" }}>
+                {/* Logo */}
+                <div style={{ textAlign: "center", marginBottom: 12 }}>
+                  <Logo size="sm" />
+                </div>
+
                 <div
                   style={{
                     textAlign: "center",
@@ -984,46 +1041,33 @@ export default function EventoPage() {
                     letterSpacing: 3,
                     color: C.g2,
                     textTransform: "uppercase",
-                    marginBottom: 16,
+                    marginBottom: 14,
                   }}
                 >
-                  Seu perfil olfativo
+                  Resultado do seu perfil olfativo
                 </div>
 
-                {/* Main result card */}
+                {/* Main result card with corners */}
                 <div
                   style={{
                     border: `1px solid ${C.border}`,
-                    padding: "28px 18px",
+                    padding: "24px 16px",
                     textAlign: "center",
                     position: "relative",
-                    marginBottom: 16,
+                    marginBottom: 14,
                     background: C.white,
                   }}
                 >
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: -8,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      background: C.bg,
-                      padding: "0 10px",
-                      fontSize: 9,
-                      letterSpacing: 3,
-                      color: C.g3,
-                    }}
-                  >
-                    RESULTADO PRINCIPAL
-                  </div>
+                  <Corners />
+
                   <div
                     style={{
                       fontFamily: serif,
-                      fontSize: 26,
+                      fontSize: 28,
                       color: C.dark,
                       fontWeight: 400,
                       letterSpacing: 2,
-                      marginBottom: 8,
+                      marginBottom: 6,
                       lineHeight: 1.2,
                     }}
                   >
@@ -1033,30 +1077,22 @@ export default function EventoPage() {
                     style={{
                       fontSize: 11,
                       color: C.g2,
-                      letterSpacing: 1.5,
-                      marginBottom: 20,
+                      letterSpacing: 1,
+                      marginBottom: 16,
                       fontWeight: 300,
+                      lineHeight: 1.5,
                     }}
                   >
                     {results[0].base.description}
                   </div>
+
                   <Divider />
-                  <div style={{ marginTop: 20 }}>
-                    <div
-                      style={{
-                        fontSize: 9,
-                        letterSpacing: 3,
-                        color: C.g3,
-                        textTransform: "uppercase",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Sua fragrância
-                    </div>
+
+                  <div style={{ marginTop: 16 }}>
                     <div
                       style={{
                         fontFamily: serif,
-                        fontSize: 28,
+                        fontSize: 30,
                         color: C.dark,
                         fontWeight: 400,
                         letterSpacing: 2,
@@ -1064,105 +1100,132 @@ export default function EventoPage() {
                     >
                       {formatBaseCode(results[0].base.code)}
                     </div>
-                    <div style={{ fontSize: 10, color: C.g2, marginTop: 4 }}>
+                    <div
+                      style={{
+                        display: "inline-block",
+                        fontSize: 11,
+                        color: C.g2,
+                        marginTop: 6,
+                        padding: "3px 12px",
+                        border: `1px solid ${C.g5}`,
+                        letterSpacing: 0.5,
+                      }}
+                    >
                       {Math.round(results[0].score * 100)}% de afinidade
                     </div>
                   </div>
+
+                  {/* Profile description inside card */}
+                  {profileResult && (
+                    <div
+                      style={{
+                        marginTop: 16,
+                        paddingTop: 14,
+                        borderTop: `0.5px solid ${C.g5}`,
+                      }}
+                    >
+                      <div style={{ fontSize: 12, color: C.g1, lineHeight: 1.7, fontWeight: 300 }}>
+                        {profileResult.profile_description}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Description */}
-                {profileResult && (
-                  <div
-                    style={{
-                      padding: "12px 0",
-                      borderTop: `.5px solid ${C.g5}`,
-                      borderBottom: `.5px solid ${C.g5}`,
-                      marginBottom: 16,
-                    }}
-                  >
-                    <div style={{ fontSize: 13, color: C.g1, lineHeight: 1.8, fontWeight: 300 }}>
-                      {profileResult.profile_description}
+                {/* Alternatives — side by side */}
+                {results.length > 1 && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <div style={{ flex: 1, height: 0.5, background: C.g5 }} />
+                      <div
+                        style={{
+                          fontSize: 9,
+                          letterSpacing: 2,
+                          color: C.g3,
+                          textTransform: "uppercase",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Também combinam com você
+                      </div>
+                      <div style={{ flex: 1, height: 0.5, background: C.g5 }} />
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {results.slice(1).map((r, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            flex: 1,
+                            textAlign: "center",
+                            padding: "14px 8px",
+                            border: `1px solid ${C.g5}`,
+                            background: C.white,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontFamily: serif,
+                              fontSize: 16,
+                              fontWeight: 400,
+                              color: C.dark,
+                              letterSpacing: 1,
+                              marginBottom: 4,
+                            }}
+                          >
+                            {formatBaseCode(r.base.code)}
+                          </div>
+                          <div style={{ fontSize: 12, color: C.g1, fontWeight: 400, marginBottom: 4 }}>
+                            {r.base.name}
+                          </div>
+                          <div style={{ fontSize: 10, color: C.g3 }}>{Math.round(r.score * 100)}%</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
 
-                {/* Alternatives */}
-                {results.length > 1 && (
-                  <div style={{ marginBottom: 16 }}>
+                {/* Selected perfumes — "SUAS REFERÊNCIAS" with dots */}
+                <div style={{ marginBottom: 14 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div style={{ flex: 1, height: 0.5, background: C.g5 }} />
                     <div
                       style={{
-                        fontSize: 10,
+                        fontSize: 9,
                         letterSpacing: 2,
                         color: C.g3,
                         textTransform: "uppercase",
-                        marginBottom: 8,
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      Também combina com você
+                      Suas referências
                     </div>
-                    {results.slice(1).map((r, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "10px 12px",
-                          border: `.5px solid ${C.g5}`,
-                          background: C.white,
-                          marginBottom: 4,
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 500, color: C.dark }}>{formatBaseCode(r.base.code)}</div>
-                          <div style={{ fontSize: 11, color: C.g2, fontWeight: 300, marginTop: 1 }}>
-                            {r.base.name}
-                          </div>
-                        </div>
-                        <div style={{ fontSize: 11, color: C.g3 }}>{Math.round(r.score * 100)}%</div>
-                      </div>
-                    ))}
+                    <div style={{ flex: 1, height: 0.5, background: C.g5 }} />
                   </div>
-                )}
-
-                {/* Selected perfumes tags */}
-                <div style={{ marginBottom: 16 }}>
-                  <div
-                    style={{
-                      fontSize: 10,
-                      letterSpacing: 2,
-                      color: C.g3,
-                      textTransform: "uppercase",
-                      marginBottom: 8,
-                      textAlign: "center",
-                    }}
-                  >
-                    Seus perfumes
-                  </div>
-                  <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
-                    {slots.filter(Boolean).map((p) => (
-                      <span
-                        key={p!.id}
-                        style={{
-                          fontSize: 11,
-                          color: C.g1,
-                          background: C.alt,
-                          border: `0.5px solid ${C.g5}`,
-                          padding: "4px 12px",
-                          borderRadius: 14,
-                          fontWeight: 300,
-                        }}
-                      >
-                        {p!.name}
-                      </span>
-                    ))}
+                  <div style={{ textAlign: "center", fontSize: 13, color: C.g1, fontWeight: 300, lineHeight: 1.6 }}>
+                    {slots
+                      .filter(Boolean)
+                      .map((p) => p!.name)
+                      .join(" • ")}
                   </div>
                 </div>
 
-                {/* Buttons */}
+                {/* CTA Button */}
                 <div style={{ marginTop: "auto" }}>
-                  <button onClick={() => go("passport")} style={btnP}>
-                    Passaporte Olfativo
+                  <button onClick={() => go("passport")} style={{ ...btnP, fontSize: 9, letterSpacing: 1.5, padding: "14px 12px", lineHeight: 1.4 }}>
+                    Clique aqui para ganhar o passaporte olfativo SHI Aroma Lab
                   </button>
                   <button onClick={reset} style={{ ...btnS, marginTop: 8 }}>
                     Início
@@ -1202,27 +1265,7 @@ export default function EventoPage() {
                     background: C.white,
                   }}
                 >
-                  {/* Corner decorations */}
-                  {[
-                    { top: 0, left: 0 },
-                    { top: 0, right: 0 },
-                    { bottom: 0, left: 0 },
-                    { bottom: 0, right: 0 },
-                  ].map((pos, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        position: "absolute",
-                        ...pos,
-                        width: 14,
-                        height: 14,
-                        borderTop: "top" in pos && pos.top === 0 ? `1.5px solid ${C.g3}` : "none",
-                        borderBottom: "bottom" in pos && pos.bottom === 0 ? `1.5px solid ${C.g3}` : "none",
-                        borderLeft: "left" in pos && pos.left === 0 ? `1.5px solid ${C.g3}` : "none",
-                        borderRight: "right" in pos && pos.right === 0 ? `1.5px solid ${C.g3}` : "none",
-                      } as React.CSSProperties}
-                    />
-                  ))}
+                  <Corners />
 
                   <div
                     style={{
@@ -1302,24 +1345,12 @@ export default function EventoPage() {
                     </div>
                   </div>
 
-                  {/* Selected perfume tags */}
-                  <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginTop: 16 }}>
-                    {slots.filter(Boolean).map((p) => (
-                      <span
-                        key={p!.id}
-                        style={{
-                          fontSize: 10,
-                          color: C.g1,
-                          background: C.alt,
-                          border: `0.5px solid ${C.g5}`,
-                          padding: "3px 10px",
-                          borderRadius: 12,
-                          fontWeight: 300,
-                        }}
-                      >
-                        {p!.name}
-                      </span>
-                    ))}
+                  {/* Selected perfume names with dots */}
+                  <div style={{ marginTop: 16, fontSize: 12, color: C.g1, fontWeight: 300 }}>
+                    {slots
+                      .filter(Boolean)
+                      .map((p) => p!.name)
+                      .join(" • ")}
                   </div>
 
                   <div style={{ marginTop: 16, fontSize: 9, color: C.g4 }}>{event.name}</div>
@@ -1331,14 +1362,14 @@ export default function EventoPage() {
                     onClick={async () => {
                       const mainBase = results[0]?.base;
                       const text = [
-                        `🪄 Meu Passaporte Olfativo — ${event.name}`,
+                        `Meu Passaporte Olfativo — ${event.name}`,
                         "",
                         `Meu perfil: ${mainBase?.name}`,
                         `Fragrância: ${formatBaseCode(mainBase?.code || "")}`,
                         "",
                         `Perfumes escolhidos: ${slots.filter(Boolean).map((p) => p!.name).join(", ")}`,
                         "",
-                        "Descubra o seu em shi.com.br 🌸",
+                        "Descubra o seu em shi.com.br",
                       ].join("\n");
 
                       if (navigator.share) {
