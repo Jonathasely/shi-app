@@ -94,15 +94,24 @@ function baseToVector(base: Base): Record<string, number> {
 
 /**
  * Main function: match selected perfumes to the best SHI Base.
+ * @param selectedPerfumes - The 3 perfumes the guest chose
+ * @param bases - All bases from the DB
+ * @param eventBaseIds - The 8 base IDs selected for this event (filters results)
  */
 export function findBestBase(
   selectedPerfumes: Perfume[],
-  bases: Base[]
+  bases: Base[],
+  eventBaseIds?: string[]
 ): ProfileResult {
   const userProfile = buildAccordProfile(selectedPerfumes);
 
+  // Filter bases to only those selected for this event
+  const availableBases = eventBaseIds && eventBaseIds.length > 0
+    ? bases.filter((b) => eventBaseIds.includes(b.id))
+    : bases;
+
   // Score each base
-  const scores = bases.map((base) => ({
+  const scores = availableBases.map((base) => ({
     base,
     score: cosineSimilarity(userProfile, baseToVector(base)),
   }));

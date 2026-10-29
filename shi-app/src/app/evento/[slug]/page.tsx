@@ -15,6 +15,7 @@ interface Event {
   slug: string;
   status: string;
   client_logo_url: string | null;
+  selected_bases: string[];
 }
 
 export default function EventoPage() {
@@ -30,9 +31,11 @@ export default function EventoPage() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
 
-  // Register
+  // Register — 4 fields
   const [guestName, setGuestName] = useState("");
+  const [guestSurname, setGuestSurname] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,7 +59,10 @@ export default function EventoPage() {
       if (error || !data) {
         setError("expired");
       } else {
-        setEvent(data);
+        setEvent({
+          ...data,
+          selected_bases: Array.isArray(data.selected_bases) ? data.selected_bases : [],
+        });
       }
       setLoading(false);
     }
@@ -100,11 +106,11 @@ export default function EventoPage() {
     }
   }, [event, password]);
 
-  // Register guest
+  // Register guest — now requires name, surname, email, phone
   const register = useCallback(() => {
-    if (!guestName.trim()) return;
+    if (!guestName.trim() || !guestSurname.trim() || !guestEmail.trim() || !guestPhone.trim()) return;
     setScreen("search");
-  }, [guestName]);
+  }, [guestName, guestSurname, guestEmail, guestPhone]);
 
   // Search perfumes
   const filteredPerfumes = localPerfumes.filter(
@@ -114,9 +120,9 @@ export default function EventoPage() {
         p.brand.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Select perfume
+  // Select perfume — exactly 3
   const selectPerfume = (perfume: Perfume) => {
-    if (selectedPerfumes.length >= 5) return;
+    if (selectedPerfumes.length >= 3) return;
     setSelectedPerfumes([...selectedPerfumes, perfume]);
     setSearchQuery("");
   };
@@ -126,15 +132,16 @@ export default function EventoPage() {
     setSelectedPerfumes(selectedPerfumes.filter((p) => p.id !== id));
   };
 
-  // Run analysis
+  // Run analysis — filters by event's 8 fragrances
   const analyze = useCallback(async () => {
-    if (selectedPerfumes.length < 3 || bases.length === 0) return;
+    if (selectedPerfumes.length !== 3 || bases.length === 0) return;
     setScreen("analyzing");
 
     // Simulate analysis time for premium feel
     await new Promise((r) => setTimeout(r, 3000));
 
-    const profileResult = findBestBase(selectedPerfumes, bases);
+    const eventBaseIds = event?.selected_bases || [];
+    const profileResult = findBestBase(selectedPerfumes, bases, eventBaseIds);
     const code = generatePassportCode();
     setResult(profileResult);
     setPassportCode(code);
@@ -144,7 +151,9 @@ export default function EventoPage() {
       await supabase.from("participants").insert({
         event_id: event.id,
         name: guestName,
+        surname: guestSurname,
         email: guestEmail || null,
+        phone: guestPhone || null,
         selected_perfumes: selectedPerfumes.map((p) => ({
           name: p.name,
           brand: p.brand,
@@ -159,7 +168,7 @@ export default function EventoPage() {
     }
 
     setScreen("result");
-  }, [selectedPerfumes, bases, event, guestName, guestEmail]);
+  }, [selectedPerfumes, bases, event, guestName, guestSurname, guestEmail, guestPhone]);
 
   // ====== RENDER ======
 
@@ -231,37 +240,52 @@ export default function EventoPage() {
     );
   }
 
-  // REGISTER SCREEN
+  // REGISTER SCREEN — 4 fields: nome, sobrenome, email, telefone
   if (screen === "register") {
+    const canContinue = guestName.trim() && guestSurname.trim() && guestEmail.trim() && guestPhone.trim();
     return (
       <main className="min-h-screen flex items-center justify-center bg-bg p-6">
         <div className="w-full max-w-sm text-center">
           <h1 className="font-serif text-3xl text-dark tracking-wider mb-1">SHI</h1>
           <p className="text-xs tracking-[3px] uppercase text-g3 mb-8">Aroma Lab</p>
 
-          <p className="text-dark font-serif text-xl mb-6">Como podemos te chamar?</p>
+          <p className="text-dark font-serif text-xl mb-6">Vamos te conhecer</p>
 
           <div className="space-y-3 mb-6">
             <input
               type="text"
-              placeholder="Seu nome"
+              placeholder="Nome *"
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
               className="w-full px-5 py-3.5 rounded-xl bg-bg-card border border-g5 text-dark text-sm placeholder:text-g4 focus:outline-none focus:border-g3 transition"
             />
             <input
+              type="text"
+              placeholder="Sobrenome *"
+              value={guestSurname}
+              onChange={(e) => setGuestSurname(e.target.value)}
+              className="w-full px-5 py-3.5 rounded-xl bg-bg-card border border-g5 text-dark text-sm placeholder:text-g4 focus:outline-none focus:border-g3 transition"
+            />
+            <input
               type="email"
-              placeholder="E-mail (opcional)"
+              placeholder="E-mail *"
               value={guestEmail}
               onChange={(e) => setGuestEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && register()}
+              className="w-full px-5 py-3.5 rounded-xl bg-bg-card border border-g5 text-dark text-sm placeholder:text-g4 focus:outline-none focus:border-g3 transition"
+            />
+            <input
+              type="tel"
+              placeholder="Telefone *"
+              value={guestPhone}
+              onChange={(e) => setGuestPhone(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && canContinue && register()}
               className="w-full px-5 py-3.5 rounded-xl bg-bg-card border border-g5 text-dark text-sm placeholder:text-g4 focus:outline-none focus:border-g3 transition"
             />
           </div>
 
           <button
             onClick={register}
-            disabled={!guestName.trim()}
+            disabled={!canContinue}
             className="w-full py-3.5 rounded-xl bg-dark text-bg-card text-sm tracking-wider uppercase font-medium transition hover:opacity-90 disabled:opacity-40"
           >
             Continuar
@@ -271,7 +295,7 @@ export default function EventoPage() {
     );
   }
 
-  // SEARCH SCREEN
+  // SEARCH SCREEN — exactly 3 perfumes
   if (screen === "search") {
     return (
       <main className="min-h-screen bg-bg p-6">
@@ -299,11 +323,11 @@ export default function EventoPage() {
             </div>
           )}
 
-          {/* Counter */}
+          {/* Counter — exactly 3 */}
           <p className="text-xs text-g2 mb-4">
-            {selectedPerfumes.length}/5 perfumes selecionados
+            {selectedPerfumes.length}/3 perfumes selecionados
             {selectedPerfumes.length < 3 && (
-              <span className="text-g3"> · mínimo 3</span>
+              <span className="text-g3"> · selecione exatamente 3</span>
             )}
           </p>
 
@@ -324,7 +348,7 @@ export default function EventoPage() {
               <button
                 key={p.id}
                 onClick={() => selectPerfume(p)}
-                disabled={selectedPerfumes.length >= 5}
+                disabled={selectedPerfumes.length >= 3}
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-bg-card border border-g5 text-left transition hover:border-g3 disabled:opacity-40"
               >
                 <div className="w-10 h-10 rounded-lg bg-bg flex items-center justify-center font-serif text-dark text-sm shrink-0">
@@ -338,8 +362,8 @@ export default function EventoPage() {
             ))}
           </div>
 
-          {/* Analyze button */}
-          {selectedPerfumes.length >= 3 && (
+          {/* Analyze button — only when exactly 3 */}
+          {selectedPerfumes.length === 3 && (
             <button
               onClick={analyze}
               className="w-full py-3.5 rounded-xl bg-dark text-bg-card text-sm tracking-wider uppercase font-medium transition hover:opacity-90"
@@ -442,7 +466,9 @@ export default function EventoPage() {
             <div className="p-6">
               <div className="text-center mb-6">
                 <p className="text-xs text-g3 uppercase tracking-wider mb-1">Convidada</p>
-                <p className="font-serif text-xl text-dark">{guestName}</p>
+                <p className="font-serif text-xl text-dark">
+                  {guestName} {guestSurname}
+                </p>
               </div>
 
               <div className="w-full h-px bg-g5 mb-6" />
