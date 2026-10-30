@@ -85,6 +85,7 @@ function Logo({ size }: { size: "lg" | "md" | "sm" }) {
   return (
     <div style={{ textAlign: "center" }}>
       <div
+        className={size === "lg" ? "shi-logo-lg" : ""}
         style={{
           fontFamily: serif,
           fontSize: s,
@@ -97,6 +98,7 @@ function Logo({ size }: { size: "lg" | "md" | "sm" }) {
         SHI
       </div>
       <div
+        className={size === "lg" ? "shi-logo-sub" : ""}
         style={{
           fontSize: Math.max(s * 0.2, 9),
           fontWeight: 300,
@@ -114,7 +116,7 @@ function Logo({ size }: { size: "lg" | "md" | "sm" }) {
 
 function Dots({ current, total }: { current: number; total: number }) {
   return (
-    <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: "16px 0 12px" }}>
+    <div className="shi-dots" style={{ display: "flex", gap: 8, justifyContent: "center", padding: "16px 0 12px" }}>
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
@@ -181,6 +183,9 @@ type Screen = "welcome" | "register" | "search" | "analyzing" | "result" | "pass
 const DEFAULT_LINE1 = "EXPERIÊNCIA OLFATIVA GUIADA POR INTELIGÊNCIA ARTIFICIAL";
 const DEFAULT_LINE2 = "DESCUBRA QUAL FRAGRÂNCIA SHI COMBINA COM VOCÊ!";
 
+/* ─── Screensaver timeout (seconds) ───────────────────────── */
+const SCREENSAVER_TIMEOUT = 60;
+
 /* ─── CSS animations (injected once) ──────────────────────── */
 const animCSS = `
 html,body{background:${C.bg}}
@@ -189,6 +194,33 @@ html,body{background:${C.bg}}
 @keyframes shi-fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes shi-pulse{0%,100%{opacity:.3}50%{opacity:.9}}
 @keyframes shi-scaleIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes shi-fadeInSS{from{opacity:0}to{opacity:1}}
+
+/* ── Totem: telas altas (>900px height) = fontes maiores ── */
+@media (min-height:900px) and (min-width:600px) {
+  .shi-welcome-sub{font-size:14px!important;max-width:380px!important;letter-spacing:4px!important;line-height:2.2!important}
+  .shi-welcome-title{font-size:36px!important;max-width:460px!important}
+  .shi-welcome-input{font-size:18px!important;padding:18px 0!important}
+  .shi-welcome-btn{font-size:14px!important;padding:20px!important;max-width:360px!important;letter-spacing:3px!important}
+  .shi-logo-lg{font-size:80px!important;letter-spacing:10px!important}
+  .shi-logo-sub{font-size:16px!important;letter-spacing:6px!important}
+  .shi-dots{padding:24px 0 20px!important}
+  .shi-section-title{font-size:28px!important}
+  .shi-label{font-size:13px!important;letter-spacing:3px!important}
+  .shi-input{font-size:20px!important;padding:18px 0!important}
+  .shi-btn-primary{font-size:14px!important;padding:20px!important;letter-spacing:3px!important}
+  .shi-body-text{font-size:16px!important}
+  .shi-small-text{font-size:14px!important}
+  .shi-search-result{font-size:18px!important}
+  .shi-accord-tag{font-size:12px!important;padding:4px 10px!important}
+  .shi-checkbox-text{font-size:14px!important}
+  .shi-frame{max-width:800px!important;padding:0 40px!important}
+}
+
+/* ── Screensaver ── */
+.shi-screensaver{position:fixed;inset:0;z-index:9999;background:#000;animation:shi-fadeInSS .8s ease;cursor:pointer}
+.shi-screensaver video{width:100%;height:100%;object-fit:cover}
+.shi-screensaver-touch{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.7);font-size:14px;letter-spacing:3px;text-transform:uppercase;font-weight:300;animation:shi-pulse 2s infinite;pointer-events:none}
 `;
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -234,6 +266,30 @@ export default function EventoPage() {
 
   // Bases from DB
   const [bases, setBases] = useState<Base[]>([]);
+
+  // Screensaver
+  const [showScreensaver, setShowScreensaver] = useState(false);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  /* ── screensaver: ativa após inatividade ────────────── */
+  const resetIdleTimer = useCallback(() => {
+    if (showScreensaver) setShowScreensaver(false);
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(() => {
+      setShowScreensaver(true);
+    }, SCREENSAVER_TIMEOUT * 1000);
+  }, [showScreensaver]);
+
+  useEffect(() => {
+    const events = ["mousedown", "mousemove", "keydown", "touchstart", "scroll"];
+    events.forEach((e) => window.addEventListener(e, resetIdleTimer, { passive: true }));
+    resetIdleTimer(); // start timer
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetIdleTimer));
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+  }, [resetIdleTimer]);
 
   /* ── navigation ──────────────────────────────────────── */
   const go = useCallback((s: Screen) => {
@@ -306,8 +362,11 @@ export default function EventoPage() {
   }, [screen, go]);
 
   /* ── Fragella API debounced search ─────────────────── */
+  // Flag: ativar fallback para DB local caso API não esteja disponível
+  const USE_LOCAL_FALLBACK = false;
+
   useEffect(() => {
-    if (searchVal.length < 2) {
+    if (searchVal.length < 3) {
       setApiResults([]);
       return;
     }
@@ -346,23 +405,27 @@ export default function EventoPage() {
   /* ── derived ─────────────────────────────────────────── */
   const filledCount = slots.filter(Boolean).length;
 
-  // Use API results if available, fallback to local DB
+  // Busca exclusiva via API. DB local só se USE_LOCAL_FALLBACK = true
   const filtered = (() => {
-    if (searchVal.length < 2) return [];
+    if (searchVal.length < 3) return [];
     const selected = slots.filter(Boolean).map((s) => s!.id);
 
-    // If API returned results, use them
+    // Resultados da API Fragella
     if (apiResults.length > 0) {
       return apiResults.filter((p) => !selected.includes(p.id)).slice(0, 8);
     }
 
-    // Fallback to local DB
-    return DB.filter(
-      (p) =>
-        (p.name.toLowerCase().includes(searchVal.toLowerCase()) ||
-          p.brand.toLowerCase().includes(searchVal.toLowerCase())) &&
-        !selected.includes(p.id)
-    ).slice(0, 6);
+    // Fallback para DB local (desativado por padrão)
+    if (USE_LOCAL_FALLBACK) {
+      return DB.filter(
+        (p) =>
+          (p.name.toLowerCase().includes(searchVal.toLowerCase()) ||
+            p.brand.toLowerCase().includes(searchVal.toLowerCase())) &&
+          !selected.includes(p.id)
+      ).slice(0, 6);
+    }
+
+    return [];
   })();
 
   /* ── handlers ────────────────────────────────────────── */
@@ -497,6 +560,26 @@ export default function EventoPage() {
   return (
     <div style={frame}>
       <style dangerouslySetInnerHTML={{ __html: animCSS }} />
+
+      {/* ═══════ SCREENSAVER ═══════ */}
+      {showScreensaver && (
+        <div
+          className="shi-screensaver"
+          onClick={() => setShowScreensaver(false)}
+          onTouchStart={() => setShowScreensaver(false)}
+        >
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            src="/screensaver1.mp4"
+          />
+          <div className="shi-screensaver-touch">Toque para iniciar</div>
+        </div>
+      )}
+
       <div
         ref={scrollRef}
         style={{ flex: 1, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}
@@ -527,6 +610,7 @@ export default function EventoPage() {
               <Logo size="lg" />
 
               <div
+                className="shi-welcome-sub"
                 style={{
                   fontSize: 9,
                   letterSpacing: 3,
@@ -543,6 +627,7 @@ export default function EventoPage() {
               </div>
 
               <div
+                className="shi-welcome-title"
                 style={{
                   fontFamily: serif,
                   fontSize: 22,
@@ -573,6 +658,7 @@ export default function EventoPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handlePass();
                   }}
+                  className="shi-welcome-input"
                   style={{
                     ...inp,
                     textAlign: "center",
@@ -585,7 +671,7 @@ export default function EventoPage() {
                   <div style={{ color: "#B85C4D", fontSize: 11, marginTop: 8 }}>Senha incorreta</div>
                 )}
               </div>
-              <button onClick={handlePass} style={{ ...btnP, maxWidth: 260 }}>
+              <button onClick={handlePass} className="shi-welcome-btn" style={{ ...btnP, maxWidth: 260 }}>
                 Entrar
               </button>
             </div>
@@ -600,46 +686,50 @@ export default function EventoPage() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
                 <div>
-                  <div style={lbl}>Seu nome</div>
+                  <div className="shi-label" style={lbl}>Seu nome</div>
                   <input
                     type="text"
                     autoComplete="given-name"
                     placeholder="Seu nome"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
+                    className="shi-input"
                     style={inp}
                   />
                 </div>
                 <div>
-                  <div style={lbl}>Sobrenome</div>
+                  <div className="shi-label" style={lbl}>Sobrenome</div>
                   <input
                     type="text"
                     autoComplete="family-name"
                     placeholder="Seu sobrenome"
                     value={formSurname}
                     onChange={(e) => setFormSurname(e.target.value)}
+                    className="shi-input"
                     style={inp}
                   />
                 </div>
                 <div>
-                  <div style={lbl}>E-mail</div>
+                  <div className="shi-label" style={lbl}>E-mail</div>
                   <input
                     type="email"
                     autoComplete="email"
                     placeholder="Seu e-mail"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
+                    className="shi-input"
                     style={inp}
                   />
                 </div>
                 <div>
-                  <div style={lbl}>Telefone</div>
+                  <div className="shi-label" style={lbl}>Telefone</div>
                   <input
                     type="tel"
                     autoComplete="tel"
                     placeholder="Seu telefone"
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
+                    className="shi-input"
                     style={inp}
                   />
                 </div>
@@ -677,7 +767,7 @@ export default function EventoPage() {
                 >
                   {formMkt && <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>✓</span>}
                 </div>
-                <div style={{ fontSize: 11, color: formMktErr ? "#B85C4D" : C.g2, lineHeight: 1.5 }}>
+                <div className="shi-checkbox-text" style={{ fontSize: 11, color: formMktErr ? "#B85C4D" : C.g2, lineHeight: 1.5 }}>
                   Aceito receber comunicações, novidades e experiências exclusivas da SHI Aroma Lab por e-mail, SMS ou WhatsApp. *
                 </div>
               </div>
@@ -688,6 +778,7 @@ export default function EventoPage() {
               )}
               <button
                 onClick={handleRegister}
+                className="shi-btn-primary"
                 style={{
                   ...btnP,
                   marginTop: 4,
@@ -884,12 +975,12 @@ export default function EventoPage() {
                       padding: "12px 0",
                     }}
                   />
-                  {searchVal.length >= 2 && apiLoading && (
+                  {searchVal.length >= 3 && apiLoading && (
                     <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: 12 }}>
                       Buscando perfumes...
                     </div>
                   )}
-                  {searchVal.length >= 2 && !apiLoading && filtered.length === 0 && (
+                  {searchVal.length >= 3 && !apiLoading && filtered.length === 0 && (
                     <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: 12 }}>
                       Nenhum resultado para &ldquo;{searchVal}&rdquo;
                     </div>
@@ -968,7 +1059,7 @@ export default function EventoPage() {
                       );
                     })}
                   </div>
-                  {searchVal.length < 2 && (
+                  {searchVal.length < 3 && (
                     <div style={{ textAlign: "center", fontSize: 10, color: C.g4, marginTop: 10 }}>
                       Digite para buscar
                     </div>
