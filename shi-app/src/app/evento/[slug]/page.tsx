@@ -81,8 +81,8 @@ const lbl: React.CSSProperties = {
 
 /* ─── Components ───────────────────────────────────────────── */
 function Logo({ size }: { size: "lg" | "md" | "sm" }) {
-  const s = size === "lg" ? "var(--shi-logo)" : size === "sm" ? "26px" : "38px";
-  const ls = size === "lg" ? "var(--shi-logo-ls)" : "6px";
+  const s = size === "lg" ? "var(--shi-logo)" : size === "sm" ? "26px" : "var(--shi-logo-md)";
+  const ls = size === "lg" ? "var(--shi-logo-ls)" : size === "sm" ? "6px" : "var(--shi-logo-md-ls)";
   return (
     <div style={{ textAlign: "center" }}>
       <div
@@ -99,7 +99,7 @@ function Logo({ size }: { size: "lg" | "md" | "sm" }) {
       </div>
       <div
         style={{
-          fontSize: size === "lg" ? "var(--shi-logo-sub)" : "9px",
+          fontSize: size === "lg" ? "var(--shi-logo-sub)" : size === "sm" ? "9px" : "var(--shi-logo-md-sub)",
           fontWeight: 300,
           color: C.g2,
           letterSpacing: size === "lg" ? "var(--shi-logo-sub-ls)" : "4px",
@@ -198,6 +198,7 @@ html,body{background:${C.bg}}
 /* ── CSS Variables: valores padrão (celular) ── */
 :root {
   --shi-logo:52px; --shi-logo-ls:6px; --shi-logo-sub:9px; --shi-logo-sub-ls:4px;
+  --shi-logo-md:38px; --shi-logo-md-ls:6px; --shi-logo-md-sub:9px;
   --shi-welcome-sub:9px; --shi-welcome-sub-ls:3px; --shi-welcome-sub-lh:2; --shi-welcome-sub-mw:220px;
   --shi-welcome-title:22px; --shi-welcome-title-mw:280px;
   --shi-welcome-input:13px; --shi-welcome-input-pad:13px;
@@ -229,43 +230,50 @@ html,body{background:${C.bg}}
   --shi-hint:10px;
   --shi-search-msg:12px;
   --shi-search-hint:10px;
+  --shi-form-gap:18px;
+  --shi-checkbox-box:18px;
+  --shi-checkbox-check:10px;
 }
 
 /* ── Totem: telas altas (>900px height AND >600px width) ── */
 @media (min-height:900px) and (min-width:600px) {
   :root {
-    --shi-logo:80px; --shi-logo-ls:10px; --shi-logo-sub:16px; --shi-logo-sub-ls:6px;
-    --shi-welcome-sub:14px; --shi-welcome-sub-ls:4px; --shi-welcome-sub-lh:2.2; --shi-welcome-sub-mw:380px;
-    --shi-welcome-title:36px; --shi-welcome-title-mw:460px;
-    --shi-welcome-input:18px; --shi-welcome-input-pad:18px;
-    --shi-btn-fs:14px; --shi-btn-pad:20px; --shi-btn-ls:3px; --shi-btn-mw:360px;
-    --shi-label:13px; --shi-label-ls:3px;
-    --shi-input:20px; --shi-input-pad:18px;
-    --shi-section-title:28px;
-    --shi-checkbox:14px;
-    --shi-frame-mw:800px; --shi-frame-pad:40px;
-    --shi-dots-pad:24px 0 20px;
-    --shi-search-input:20px;
-    --shi-search-name:18px; --shi-search-brand:14px;
-    --shi-accord-fs:12px; --shi-accord-pad:4px 10px;
-    --shi-notes-tag:14px; --shi-notes-tag-pad:5px 12px;
-    --shi-notes-label:13px;
-    --shi-progress-text:14px;
-    --shi-slot-w:140px; --shi-slot-h:150px; --shi-slot-img:56px;
-    --shi-slot-name:13px; --shi-slot-brand:10px; --shi-slot-placeholder:12px;
-    --shi-analyze-text:18px; --shi-analyze-s:28px;
-    --shi-result-name:40px; --shi-result-desc:15px; --shi-result-code:42px;
-    --shi-result-score:15px; --shi-result-profile:16px;
-    --shi-alt-code:22px; --shi-alt-name:16px; --shi-alt-score:14px;
-    --shi-section-label:13px; --shi-section-label-ls:3px;
-    --shi-ref-text:18px;
-    --shi-passport-label:13px; --shi-passport-name:15px;
-    --shi-passport-base:32px; --shi-passport-frag:28px;
-    --shi-passport-ref:16px; --shi-passport-event:13px;
-    --shi-cta-fs:13px;
-    --shi-hint:14px;
-    --shi-search-msg:16px;
-    --shi-search-hint:14px;
+    --shi-logo:96px; --shi-logo-ls:14px; --shi-logo-sub:18px; --shi-logo-sub-ls:8px;
+    --shi-logo-md:64px; --shi-logo-md-ls:10px; --shi-logo-md-sub:14px;
+    --shi-welcome-sub:18px; --shi-welcome-sub-ls:5px; --shi-welcome-sub-lh:2.2; --shi-welcome-sub-mw:480px;
+    --shi-welcome-title:42px; --shi-welcome-title-mw:540px;
+    --shi-welcome-input:22px; --shi-welcome-input-pad:22px;
+    --shi-btn-fs:18px; --shi-btn-pad:24px; --shi-btn-ls:4px; --shi-btn-mw:480px;
+    --shi-label:16px; --shi-label-ls:4px;
+    --shi-input:24px; --shi-input-pad:22px;
+    --shi-section-title:36px;
+    --shi-checkbox:18px;
+    --shi-frame-mw:800px; --shi-frame-pad:48px;
+    --shi-dots-pad:28px 0 24px;
+    --shi-search-input:24px;
+    --shi-search-name:22px; --shi-search-brand:16px;
+    --shi-accord-fs:14px; --shi-accord-pad:5px 12px;
+    --shi-notes-tag:16px; --shi-notes-tag-pad:6px 14px;
+    --shi-notes-label:15px;
+    --shi-progress-text:16px;
+    --shi-slot-w:180px; --shi-slot-h:190px; --shi-slot-img:70px;
+    --shi-slot-name:16px; --shi-slot-brand:13px; --shi-slot-placeholder:14px;
+    --shi-analyze-text:22px; --shi-analyze-s:36px;
+    --shi-result-name:48px; --shi-result-desc:18px; --shi-result-code:50px;
+    --shi-result-score:18px; --shi-result-profile:20px;
+    --shi-alt-code:28px; --shi-alt-name:20px; --shi-alt-score:16px;
+    --shi-section-label:16px; --shi-section-label-ls:4px;
+    --shi-ref-text:22px;
+    --shi-passport-label:16px; --shi-passport-name:20px;
+    --shi-passport-base:40px; --shi-passport-frag:34px;
+    --shi-passport-ref:20px; --shi-passport-event:16px;
+    --shi-cta-fs:16px;
+    --shi-hint:18px;
+    --shi-search-msg:20px;
+    --shi-search-hint:18px;
+    --shi-form-gap:28px;
+    --shi-checkbox-box:24px;
+    --shi-checkbox-check:14px;
   }
 }
 
@@ -734,7 +742,7 @@ export default function EventoPage() {
               <div style={{ textAlign: "center", marginBottom: 20 }}>
                 <Logo size="md" />
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--shi-form-gap)", flex: 1 }}>
                 <div>
                   <div style={lbl}>Seu nome</div>
                   <input
@@ -795,8 +803,8 @@ export default function EventoPage() {
               >
                 <div
                   style={{
-                    width: 18,
-                    height: 18,
+                    width: "var(--shi-checkbox-box)",
+                    height: "var(--shi-checkbox-box)",
                     flexShrink: 0,
                     marginTop: 1,
                     border: formMktErr
@@ -811,7 +819,7 @@ export default function EventoPage() {
                     transition: "all .2s",
                   }}
                 >
-                  {formMkt && <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>✓</span>}
+                  {formMkt && <span style={{ color: "#fff", fontSize: "var(--shi-checkbox-check)", fontWeight: 700 }}>✓</span>}
                 </div>
                 <div style={{ fontSize: "var(--shi-checkbox)", color: formMktErr ? "#B85C4D" : C.g2, lineHeight: 1.5 }}>
                   Aceito receber comunicações, novidades e experiências exclusivas da SHI Aroma Lab por e-mail, SMS ou WhatsApp. *
@@ -1639,11 +1647,11 @@ export default function EventoPage() {
                         }
                       }
                     }}
-                    style={{ ...btnS, flex: 1, fontSize: 10, letterSpacing: 1.5 }}
+                    style={{ ...btnS, flex: 1, fontSize: "var(--shi-hint)", letterSpacing: 1.5 }}
                   >
                     Compartilhar
                   </button>
-                  <button onClick={reset} style={{ ...btnS, flex: 1, fontSize: 10, letterSpacing: 1.5 }}>
+                  <button onClick={reset} style={{ ...btnS, flex: 1, fontSize: "var(--shi-hint)", letterSpacing: 1.5 }}>
                     Início
                   </button>
                 </div>
