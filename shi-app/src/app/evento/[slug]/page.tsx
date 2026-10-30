@@ -7,6 +7,49 @@ import { perfumes as DB } from "@/data/perfumes";
 import { findBestBase, findTopBases, generatePassportCode } from "@/lib/algorithm";
 import type { Perfume, Base, ProfileResult } from "@/lib/algorithm";
 
+/* ─── Fragella API types ─── */
+interface FragellaAccordMap {
+  [key: string]: number;
+}
+
+const ACCORD_PERCENT: Record<string, number> = {
+  Dominant: 95,
+  Prominent: 75,
+  Moderate: 55,
+  Light: 35,
+  Faint: 15,
+};
+
+function fragellaToAccords(
+  accords: string[],
+  pct: string[]
+): { name: string; value: number }[] {
+  return accords.map((name, i) => ({
+    name,
+    value: ACCORD_PERCENT[pct[i]] || 50,
+  }));
+}
+
+interface FragellaItem {
+  id: string;
+  name: string;
+  brand: string;
+  gender: string;
+  image: string;
+  imageTransparent: string;
+  accords: string[];
+  accordsPercentage: string[];
+  notes: {
+    top: { name: string; image?: string }[];
+    heart: { name: string; image?: string }[];
+    base: { name: string; image?: string }[];
+  };
+}
+
+interface PerfumeWithImage extends Perfume {
+  image?: string;
+}
+
 /* ─── Brand palette ────────────────────────────────────────── */
 const C = {
   bg: "#F5EFE8",
@@ -211,9 +254,11 @@ export default function EventoPage() {
   const [formMktErr, setFormMktErr] = useState(false);
 
   // Search
-  const [slots, setSlots] = useState<(Perfume | null)[]>([null, null, null]);
+  const [slots, setSlots] = useState<(PerfumeWithImage | null)[]>([null, null, null]);
   const [activeSlot, setActiveSlot] = useState(-1);
   const [searchVal, setSearchVal] = useState("");
+  const [apiResults, setApiResults] = useState<PerfumeWithImage[]>([]);
+  const [apiLoading, setApiLoading] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -298,17 +343,64 @@ export default function EventoPage() {
     };
   }, [screen, go]);
 
+  /* ── Fragella API debounced search ─────────────────── */
+  useEffect(() => {
+    if (searchVal.length < 2) {
+      setApiResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setApiLoading(true);
+      try {
+        const res = await fetch(`/api/fragella?search=${encodeURIComponent(searchVal)}&limit=10`);
+        const json = await res.json();
+        if (json.data && json.data.length > 0) {
+          const mapped: PerfumeWithImage[] = json.data.map((item: FragellaItem) => ({
+            id: item.id || item.name,
+            name: item.name,
+            brand: item.brand,
+            image: item.image || item.imageTransparent || "",
+            accords: fragellaToAccords(item.accords || [], item.accordsPercentage || []),
+            notes: {
+              top: (item.notes?.top || []).map((n) => n.name),
+              mid: (item.notes?.heart || []).map((n) => n.name),
+              base: (item.notes?.base || []).map((n) => n.name),
+            },
+          }));
+          setApiResults(mapped);
+        } else {
+          setApiResults([]);
+        }
+      } catch {
+        // Fallback silently to local DB
+        setApiResults([]);
+      }
+      setApiLoading(false);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchVal]);
+
   /* ── derived ─────────────────────────────────────────── */
   const filledCount = slots.filter(Boolean).length;
-  const filtered =
-    searchVal.length >= 2
-      ? DB.filter(
-          (p) =>
-            (p.name.toLowerCase().includes(searchVal.toLowerCase()) ||
-              p.brand.toLowerCase().includes(searchVal.toLowerCase())) &&
-            !slots.find((s) => s && s.id === p.id)
-        ).slice(0, 6)
-      : [];
+
+  // Use API results if available, fallback to local DB
+  const filtered = (() => {
+    if (searchVal.length < 2) return [];
+    const selected = slots.filter(Boolean).map((s) => s!.id);
+
+    // If API returned results, use them
+    if (apiResults.length > 0) {
+      return apiResults.filter((p) => !selected.includes(p.id)).slice(0, 8);
+    }
+
+    // Fallback to local DB
+    return DB.filter(
+      (p) =>
+        (p.name.toLowerCase().includes(searchVal.toLowerCase()) ||
+          p.brand.toLowerCase().includes(searchVal.toLowerCase())) &&
+        !selected.includes(p.id)
+    ).slice(0, 6);
+  })();
 
   /* ── handlers ────────────────────────────────────────── */
   const handlePass = useCallback(async () => {
@@ -709,13 +801,29 @@ export default function EventoPage() {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            zIndex: 2,
                           }}
                         >
                           <span style={{ color: "#fff", fontSize: 9, fontWeight: 700 }}>✕</span>
                         </div>
+                        {(s as PerfumeWithImage).image ? (
+                          <img
+                            src={(s as PerfumeWithImage).image}
+                            alt={s.name}
+                            style={{
+                              width: 40,
+                              height: 40,
+                              objectFit: "contain",
+                              marginBottom: 2,
+                            }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : null}
                         <div
                           style={{
-                            fontSize: 11,
+                            fontSize: 10,
                             color: C.dark,
                             fontWeight: 500,
                             textAlign: "center",
@@ -724,7 +832,7 @@ export default function EventoPage() {
                         >
                           {s.name}
                         </div>
-                        <div style={{ fontSize: 9, color: C.g2, textAlign: "center", marginTop: 3 }}>
+                        <div style={{ fontSize: 8, color: C.g2, textAlign: "center", marginTop: 2 }}>
                           {s.brand}
                         </div>
                       </>
@@ -813,45 +921,89 @@ export default function EventoPage() {
                       padding: "12px 0",
                     }}
                   />
-                  {searchVal.length >= 2 && filtered.length === 0 && (
+                  {searchVal.length >= 2 && apiLoading && (
+                    <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: 12 }}>
+                      Buscando perfumes...
+                    </div>
+                  )}
+                  {searchVal.length >= 2 && !apiLoading && filtered.length === 0 && (
                     <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: 12 }}>
                       Nenhum resultado para &ldquo;{searchVal}&rdquo;
                     </div>
                   )}
-                  <div style={{ maxHeight: 280, overflowY: "auto" }}>
-                    {filtered.map((p) => (
-                      <div
-                        key={p.id}
-                        onClick={() => selectPerfume(p)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 12,
-                          padding: "11px 0",
-                          borderBottom: `0.5px solid ${C.g5}`,
-                          cursor: "pointer",
-                        }}
-                      >
+                  <div style={{ maxHeight: 320, overflowY: "auto" }}>
+                    {filtered.map((p) => {
+                      const pi = p as PerfumeWithImage;
+                      return (
                         <div
+                          key={p.id}
+                          onClick={() => selectPerfume(p)}
                           style={{
-                            width: 38,
-                            height: 38,
-                            background: C.alt,
-                            border: `1px solid ${C.g5}`,
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
+                            gap: 12,
+                            padding: "10px 0",
+                            borderBottom: `0.5px solid ${C.g5}`,
+                            cursor: "pointer",
                           }}
                         >
-                          <span style={{ fontSize: 13, color: C.g1, fontWeight: 500 }}>{p.name[0]}</span>
+                          {pi.image ? (
+                            <img
+                              src={pi.image}
+                              alt={p.name}
+                              style={{
+                                width: 44,
+                                height: 44,
+                                objectFit: "contain",
+                                flexShrink: 0,
+                                background: C.white,
+                                border: `1px solid ${C.g5}`,
+                              }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: 44,
+                                height: 44,
+                                background: C.alt,
+                                border: `1px solid ${C.g5}`,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <span style={{ fontSize: 14, color: C.g1, fontWeight: 500 }}>{p.name[0]}</span>
+                            </div>
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: C.dark, fontWeight: 500 }}>{p.name}</div>
+                            <div style={{ fontSize: 10, color: C.g2, fontWeight: 300 }}>{p.brand}</div>
+                            {p.accords && p.accords.length > 0 && (
+                              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 3 }}>
+                                {p.accords.slice(0, 3).map((a, i) => (
+                                  <span
+                                    key={i}
+                                    style={{
+                                      fontSize: 8,
+                                      color: C.g3,
+                                      background: C.alt,
+                                      padding: "1px 5px",
+                                      letterSpacing: 0.5,
+                                    }}
+                                  >
+                                    {a.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <div style={{ fontSize: 13, color: C.dark }}>{p.name}</div>
-                          <div style={{ fontSize: 10, color: C.g2, fontWeight: 300 }}>{p.brand}</div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {searchVal.length < 2 && (
                     <div style={{ textAlign: "center", fontSize: 10, color: C.g4, marginTop: 10 }}>
@@ -1050,9 +1202,10 @@ export default function EventoPage() {
                   Resultado do seu perfil olfativo
                 </div>
 
-                {/* Main result card with corners — no fill */}
+                {/* Main result card with corners — border + no fill */}
                 <div
                   style={{
+                    border: `1px solid ${C.g4}`,
                     padding: "24px 16px",
                     textAlign: "center",
                     position: "relative",
@@ -1259,6 +1412,7 @@ export default function EventoPage() {
               >
                 <div
                   style={{
+                    border: `1px solid ${C.g4}`,
                     padding: "32px 18px 24px",
                     position: "relative",
                   }}
@@ -1361,6 +1515,7 @@ export default function EventoPage() {
                       const mainBase = results[0]?.base;
                       const text = [
                         `Meu Passaporte Olfativo — ${event.name}`,
+                        `Código: ${passportCode}`,
                         "",
                         `Meu perfil: ${mainBase?.name}`,
                         `Fragrância: ${formatBaseCode(mainBase?.code || "")}`,
