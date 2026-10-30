@@ -208,8 +208,27 @@ html,body{background:${C.bg}}
   --shi-checkbox:11px;
   --shi-frame-mw:600px; --shi-frame-pad:24px;
   --shi-dots-pad:16px 0 12px;
-  --shi-search-name:14px; --shi-search-brand:12px;
-  --shi-accord-fs:9px; --shi-accord-pad:3px 8px;
+  --shi-search-input:14px;
+  --shi-search-name:13px; --shi-search-brand:10px;
+  --shi-accord-fs:8px; --shi-accord-pad:1px 5px;
+  --shi-notes-tag:10px; --shi-notes-tag-pad:3px 8px;
+  --shi-notes-label:9px;
+  --shi-progress-text:10px;
+  --shi-slot-w:100px; --shi-slot-h:110px; --shi-slot-img:40px;
+  --shi-slot-name:10px; --shi-slot-brand:8px; --shi-slot-placeholder:9px;
+  --shi-analyze-text:12px; --shi-analyze-s:18px;
+  --shi-result-name:28px; --shi-result-desc:11px; --shi-result-code:30px;
+  --shi-result-score:11px; --shi-result-profile:12px;
+  --shi-alt-code:16px; --shi-alt-name:12px; --shi-alt-score:10px;
+  --shi-section-label:9px; --shi-section-label-ls:2px;
+  --shi-ref-text:13px;
+  --shi-passport-label:9px; --shi-passport-name:11px;
+  --shi-passport-base:22px; --shi-passport-frag:20px;
+  --shi-passport-ref:12px; --shi-passport-event:9px;
+  --shi-cta-fs:9px;
+  --shi-hint:10px;
+  --shi-search-msg:12px;
+  --shi-search-hint:10px;
 }
 
 /* ── Totem: telas altas (>900px height AND >600px width) ── */
@@ -226,8 +245,27 @@ html,body{background:${C.bg}}
     --shi-checkbox:14px;
     --shi-frame-mw:800px; --shi-frame-pad:40px;
     --shi-dots-pad:24px 0 20px;
+    --shi-search-input:20px;
     --shi-search-name:18px; --shi-search-brand:14px;
     --shi-accord-fs:12px; --shi-accord-pad:4px 10px;
+    --shi-notes-tag:14px; --shi-notes-tag-pad:5px 12px;
+    --shi-notes-label:13px;
+    --shi-progress-text:14px;
+    --shi-slot-w:140px; --shi-slot-h:150px; --shi-slot-img:56px;
+    --shi-slot-name:13px; --shi-slot-brand:10px; --shi-slot-placeholder:12px;
+    --shi-analyze-text:18px; --shi-analyze-s:28px;
+    --shi-result-name:40px; --shi-result-desc:15px; --shi-result-code:42px;
+    --shi-result-score:15px; --shi-result-profile:16px;
+    --shi-alt-code:22px; --shi-alt-name:16px; --shi-alt-score:14px;
+    --shi-section-label:13px; --shi-section-label-ls:3px;
+    --shi-ref-text:18px;
+    --shi-passport-label:13px; --shi-passport-name:15px;
+    --shi-passport-base:32px; --shi-passport-frag:28px;
+    --shi-passport-ref:16px; --shi-passport-event:13px;
+    --shi-cta-fs:13px;
+    --shi-hint:14px;
+    --shi-search-msg:16px;
+    --shi-search-hint:14px;
   }
 }
 
@@ -834,8 +872,8 @@ export default function EventoPage() {
                       }
                     }}
                     style={{
-                      width: 100,
-                      height: 110,
+                      width: "var(--shi-slot-w)",
+                      height: "var(--shi-slot-h)",
                       border: activeSlot === i ? `2px solid ${C.dark}` : `1.5px solid ${s ? C.border : C.g5}`,
                       background: s ? C.white : C.alt,
                       display: "flex",
@@ -872,8 +910,8 @@ export default function EventoPage() {
                             src={(s as PerfumeWithImage).image}
                             alt={s.name}
                             style={{
-                              width: 40,
-                              height: 40,
+                              width: "var(--shi-slot-img)",
+                              height: "var(--shi-slot-img)",
                               objectFit: "contain",
                               marginBottom: 2,
                             }}
@@ -884,7 +922,7 @@ export default function EventoPage() {
                         ) : null}
                         <div
                           style={{
-                            fontSize: 10,
+                            fontSize: "var(--shi-slot-name)",
                             color: C.dark,
                             fontWeight: 500,
                             textAlign: "center",
@@ -893,7 +931,7 @@ export default function EventoPage() {
                         >
                           {s.name}
                         </div>
-                        <div style={{ fontSize: 8, color: C.g2, textAlign: "center", marginTop: 2 }}>
+                        <div style={{ fontSize: "var(--shi-slot-brand)", color: C.g2, textAlign: "center", marginTop: 2 }}>
                           {s.brand}
                         </div>
                       </>
@@ -913,7 +951,7 @@ export default function EventoPage() {
                         >
                           <span style={{ color: C.g3, fontSize: 14, lineHeight: 1 }}>+</span>
                         </div>
-                        <div style={{ fontSize: 9, color: C.g3, letterSpacing: 1 }}>Perfume {i + 1}</div>
+                        <div style={{ fontSize: "var(--shi-slot-placeholder)", color: C.g3, letterSpacing: 1 }}>Perfume {i + 1}</div>
                       </>
                     )}
                   </div>
@@ -946,7 +984,7 @@ export default function EventoPage() {
                 </div>
                 <span
                   style={{
-                    fontSize: 10,
+                    fontSize: "var(--shi-progress-text)",
                     color: filledCount >= 3 ? C.dark : C.g2,
                     fontWeight: filledCount >= 3 ? 600 : 400,
                   }}
@@ -978,17 +1016,17 @@ export default function EventoPage() {
                     style={{
                       ...inp,
                       borderBottom: `1.5px solid ${C.dark}`,
-                      fontSize: 14,
-                      padding: "12px 0",
+                      fontSize: "var(--shi-search-input)",
+                      padding: "var(--shi-input-pad) 0",
                     }}
                   />
                   {searchVal.length >= 3 && apiLoading && (
-                    <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: 12 }}>
+                    <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: "var(--shi-search-msg)" }}>
                       Buscando perfumes...
                     </div>
                   )}
                   {searchVal.length >= 3 && !apiLoading && filtered.length === 0 && (
-                    <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: 12 }}>
+                    <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: "var(--shi-search-msg)" }}>
                       Nenhum resultado para &ldquo;{searchVal}&rdquo;
                     </div>
                   )}
@@ -1041,18 +1079,18 @@ export default function EventoPage() {
                             </div>
                           )}
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, color: C.dark, fontWeight: 500 }}>{p.name}</div>
-                            <div style={{ fontSize: 10, color: C.g2, fontWeight: 300 }}>{p.brand}</div>
+                            <div style={{ fontSize: "var(--shi-search-name)", color: C.dark, fontWeight: 500 }}>{p.name}</div>
+                            <div style={{ fontSize: "var(--shi-search-brand)", color: C.g2, fontWeight: 300 }}>{p.brand}</div>
                             {p.accords && p.accords.length > 0 && (
                               <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 3 }}>
                                 {p.accords.slice(0, 3).map((a, i) => (
                                   <span
                                     key={i}
                                     style={{
-                                      fontSize: 8,
+                                      fontSize: "var(--shi-accord-fs)",
                                       color: C.g3,
                                       background: C.alt,
-                                      padding: "1px 5px",
+                                      padding: "var(--shi-accord-pad)",
                                       letterSpacing: 0.5,
                                     }}
                                   >
@@ -1067,7 +1105,7 @@ export default function EventoPage() {
                     })}
                   </div>
                   {searchVal.length < 3 && (
-                    <div style={{ textAlign: "center", fontSize: 10, color: C.g4, marginTop: 10 }}>
+                    <div style={{ textAlign: "center", fontSize: "var(--shi-search-hint)", color: C.g4, marginTop: 10 }}>
                       Digite para buscar
                     </div>
                   )}
@@ -1086,8 +1124,8 @@ export default function EventoPage() {
                 >
                   <div
                     style={{
-                      fontSize: 10,
-                      letterSpacing: 2,
+                      fontSize: "var(--shi-notes-label)",
+                      letterSpacing: "var(--shi-label-ls)",
                       color: C.g2,
                       textTransform: "uppercase",
                       marginBottom: 10,
@@ -1113,9 +1151,9 @@ export default function EventoPage() {
                       <div key={tier} style={{ marginBottom: 8 }}>
                         <div
                           style={{
-                            fontSize: 9,
+                            fontSize: "var(--shi-notes-label)",
                             color: C.g3,
-                            letterSpacing: 2,
+                            letterSpacing: "var(--shi-label-ls)",
                             textTransform: "uppercase",
                             marginBottom: 5,
                             fontWeight: 500,
@@ -1128,11 +1166,11 @@ export default function EventoPage() {
                             <span
                               key={i}
                               style={{
-                                fontSize: 10,
+                                fontSize: "var(--shi-notes-tag)",
                                 color: C.g1,
                                 background: C.alt,
                                 border: `0.5px solid ${C.g5}`,
-                                padding: "3px 8px",
+                                padding: "var(--shi-notes-tag-pad)",
                                 borderRadius: 12,
                                 fontWeight: 300,
                               }}
@@ -1158,7 +1196,7 @@ export default function EventoPage() {
                     Descobrir meu perfil olfativo
                   </button>
                   {filledCount < 3 && (
-                    <div style={{ textAlign: "center", fontSize: 10, color: C.g3, marginTop: 6 }}>
+                    <div style={{ textAlign: "center", fontSize: "var(--shi-hint)", color: C.g3, marginTop: 6 }}>
                       {filledCount === 1
                         ? "Adicione mais para maior precisão"
                         : "Mais um para precisão máxima!"}
@@ -1204,7 +1242,7 @@ export default function EventoPage() {
                     justifyContent: "center",
                   }}
                 >
-                  <span style={{ fontFamily: serif, fontSize: 18, color: C.dark }}>S</span>
+                  <span style={{ fontFamily: serif, fontSize: "var(--shi-analyze-s)", color: C.dark }}>S</span>
                 </div>
               </div>
               {["Analisando suas escolhas", "Identificando acordes", "Mapeando perfil olfativo", "Encontrando seu SHI"].map(
@@ -1212,7 +1250,7 @@ export default function EventoPage() {
                   <div
                     key={i}
                     style={{
-                      fontSize: 12,
+                      fontSize: "var(--shi-analyze-text)",
                       fontWeight: 300,
                       color: i <= step ? C.g1 : C.g5,
                       marginBottom: 7,
@@ -1253,8 +1291,8 @@ export default function EventoPage() {
                 <div
                   style={{
                     textAlign: "center",
-                    fontSize: 10,
-                    letterSpacing: 3,
+                    fontSize: "var(--shi-section-label)",
+                    letterSpacing: "var(--shi-section-label-ls)",
                     color: C.g2,
                     textTransform: "uppercase",
                     marginBottom: 14,
@@ -1278,7 +1316,7 @@ export default function EventoPage() {
                   <div
                     style={{
                       fontFamily: serif,
-                      fontSize: 28,
+                      fontSize: "var(--shi-result-name)",
                       color: C.dark,
                       fontWeight: 400,
                       letterSpacing: 2,
@@ -1290,7 +1328,7 @@ export default function EventoPage() {
                   </div>
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: "var(--shi-result-desc)",
                       color: C.g2,
                       letterSpacing: 1,
                       marginBottom: 16,
@@ -1307,7 +1345,7 @@ export default function EventoPage() {
                     <div
                       style={{
                         fontFamily: serif,
-                        fontSize: 30,
+                        fontSize: "var(--shi-result-code)",
                         color: C.dark,
                         fontWeight: 400,
                         letterSpacing: 2,
@@ -1318,7 +1356,7 @@ export default function EventoPage() {
                     <div
                       style={{
                         display: "inline-block",
-                        fontSize: 11,
+                        fontSize: "var(--shi-result-score)",
                         color: C.g2,
                         marginTop: 6,
                         padding: "3px 12px",
@@ -1339,7 +1377,7 @@ export default function EventoPage() {
                         borderTop: `0.5px solid ${C.g5}`,
                       }}
                     >
-                      <div style={{ fontSize: 12, color: C.g1, lineHeight: 1.7, fontWeight: 300 }}>
+                      <div style={{ fontSize: "var(--shi-result-profile)", color: C.g1, lineHeight: 1.7, fontWeight: 300 }}>
                         {profileResult.profile_description}
                       </div>
                     </div>
@@ -1360,8 +1398,8 @@ export default function EventoPage() {
                       <div style={{ flex: 1, height: 0.5, background: C.g5 }} />
                       <div
                         style={{
-                          fontSize: 9,
-                          letterSpacing: 2,
+                          fontSize: "var(--shi-section-label)",
+                          letterSpacing: "var(--shi-section-label-ls)",
                           color: C.g3,
                           textTransform: "uppercase",
                           whiteSpace: "nowrap",
@@ -1385,7 +1423,7 @@ export default function EventoPage() {
                           <div
                             style={{
                               fontFamily: serif,
-                              fontSize: 16,
+                              fontSize: "var(--shi-alt-code)",
                               fontWeight: 400,
                               color: C.dark,
                               letterSpacing: 1,
@@ -1394,10 +1432,10 @@ export default function EventoPage() {
                           >
                             {formatBaseCode(r.base.code)}
                           </div>
-                          <div style={{ fontSize: 12, color: C.g1, fontWeight: 400, marginBottom: 4 }}>
+                          <div style={{ fontSize: "var(--shi-alt-name)", color: C.g1, fontWeight: 400, marginBottom: 4 }}>
                             {r.base.name}
                           </div>
-                          <div style={{ fontSize: 10, color: C.g3 }}>{Math.round(r.score * 100)}%</div>
+                          <div style={{ fontSize: "var(--shi-alt-score)", color: C.g3 }}>{Math.round(r.score * 100)}%</div>
                         </div>
                       ))}
                     </div>
@@ -1417,8 +1455,8 @@ export default function EventoPage() {
                     <div style={{ flex: 1, height: 0.5, background: C.g5 }} />
                     <div
                       style={{
-                        fontSize: 9,
-                        letterSpacing: 2,
+                        fontSize: "var(--shi-section-label)",
+                        letterSpacing: "var(--shi-section-label-ls)",
                         color: C.g3,
                         textTransform: "uppercase",
                         whiteSpace: "nowrap",
@@ -1428,7 +1466,7 @@ export default function EventoPage() {
                     </div>
                     <div style={{ flex: 1, height: 0.5, background: C.g5 }} />
                   </div>
-                  <div style={{ textAlign: "center", fontSize: 13, color: C.g1, fontWeight: 300, lineHeight: 1.6 }}>
+                  <div style={{ textAlign: "center", fontSize: "var(--shi-ref-text)", color: C.g1, fontWeight: 300, lineHeight: 1.6 }}>
                     {slots
                       .filter(Boolean)
                       .map((p) => p!.name)
@@ -1438,7 +1476,7 @@ export default function EventoPage() {
 
                 {/* CTA Button */}
                 <div style={{ marginTop: "auto" }}>
-                  <button onClick={() => go("passport")} style={{ ...btnP, fontSize: 9, letterSpacing: 1.5, padding: "14px 12px", lineHeight: 1.4 }}>
+                  <button onClick={() => go("passport")} style={{ ...btnP, fontSize: "var(--shi-cta-fs)", letterSpacing: 1.5, padding: "14px 12px", lineHeight: 1.4 }}>
                     Clique aqui para ganhar o passaporte olfativo SHI Aroma Lab
                   </button>
                   <button onClick={reset} style={{ ...btnS, marginTop: 8 }}>
@@ -1482,7 +1520,7 @@ export default function EventoPage() {
 
                   <div
                     style={{
-                      fontSize: 9,
+                      fontSize: "var(--shi-passport-label)",
                       letterSpacing: 4,
                       color: C.g3,
                       textTransform: "uppercase",
@@ -1495,7 +1533,7 @@ export default function EventoPage() {
                   <div style={{ width: 30, height: 0.5, background: C.g4, margin: "16px auto" }} />
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: "var(--shi-passport-name)",
                       letterSpacing: 2,
                       color: C.g2,
                       textTransform: "uppercase",
@@ -1507,7 +1545,7 @@ export default function EventoPage() {
                   <div
                     style={{
                       fontFamily: serif,
-                      fontSize: 22,
+                      fontSize: "var(--shi-passport-base)",
                       color: C.dark,
                       fontWeight: 400,
                       letterSpacing: 1,
@@ -1518,7 +1556,7 @@ export default function EventoPage() {
                   </div>
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: "var(--shi-result-desc)",
                       color: C.g2,
                       letterSpacing: 1,
                       fontWeight: 300,
@@ -1536,7 +1574,7 @@ export default function EventoPage() {
                   >
                     <div
                       style={{
-                        fontSize: 9,
+                        fontSize: "var(--shi-passport-label)",
                         letterSpacing: 3,
                         color: C.g3,
                         textTransform: "uppercase",
@@ -1548,7 +1586,7 @@ export default function EventoPage() {
                     <div
                       style={{
                         fontFamily: serif,
-                        fontSize: 20,
+                        fontSize: "var(--shi-passport-frag)",
                         color: C.dark,
                         fontWeight: 400,
                         letterSpacing: 2,
@@ -1559,14 +1597,14 @@ export default function EventoPage() {
                   </div>
 
                   {/* Selected perfume names with dots */}
-                  <div style={{ marginTop: 16, fontSize: 12, color: C.g1, fontWeight: 300 }}>
+                  <div style={{ marginTop: 16, fontSize: "var(--shi-passport-ref)", color: C.g1, fontWeight: 300 }}>
                     {slots
                       .filter(Boolean)
                       .map((p) => p!.name)
                       .join(" • ")}
                   </div>
 
-                  <div style={{ marginTop: 16, fontSize: 9, color: C.g4 }}>{event.name}</div>
+                  <div style={{ marginTop: 16, fontSize: "var(--shi-passport-event)", color: C.g4 }}>{event.name}</div>
                 </div>
 
                 {/* Buttons */}
