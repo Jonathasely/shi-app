@@ -8,44 +8,6 @@ import { findBestBase, findTopBases, generatePassportCode } from "@/lib/algorith
 import type { Perfume, Base, ProfileResult } from "@/lib/algorithm";
 
 /* ─── Fragella API types ─── */
-interface FragellaAccordMap {
-  [key: string]: number;
-}
-
-const ACCORD_PERCENT: Record<string, number> = {
-  Dominant: 95,
-  Prominent: 75,
-  Moderate: 55,
-  Light: 35,
-  Faint: 15,
-};
-
-function fragellaToAccords(
-  accords: string[],
-  pct: string[]
-): { name: string; value: number }[] {
-  return accords.map((name, i) => ({
-    name,
-    value: ACCORD_PERCENT[pct[i]] || 50,
-  }));
-}
-
-interface FragellaItem {
-  id: string;
-  name: string;
-  brand: string;
-  gender: string;
-  image: string;
-  imageTransparent: string;
-  accords: string[];
-  accordsPercentage: string[];
-  notes: {
-    top: { name: string; image?: string }[];
-    heart: { name: string; image?: string }[];
-    base: { name: string; image?: string }[];
-  };
-}
-
 interface PerfumeWithImage extends Perfume {
   image?: string;
 }
@@ -355,16 +317,17 @@ export default function EventoPage() {
         const res = await fetch(`/api/fragella?search=${encodeURIComponent(searchVal)}&limit=10`);
         const json = await res.json();
         if (json.data && json.data.length > 0) {
-          const mapped: PerfumeWithImage[] = json.data.map((item: FragellaItem) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const mapped: PerfumeWithImage[] = json.data.map((item: any) => ({
             id: item.id || item.name,
             name: item.name,
             brand: item.brand,
             image: item.image || item.imageTransparent || "",
-            accords: fragellaToAccords(item.accords || [], item.accordsPercentage || []),
+            accords: item.accords || [],
             notes: {
-              top: (item.notes?.top || []).map((n) => n.name),
-              mid: (item.notes?.heart || []).map((n) => n.name),
-              base: (item.notes?.base || []).map((n) => n.name),
+              top: (item.notes?.top || []).map((n: any) => n.name || n),
+              mid: (item.notes?.heart || []).map((n: any) => n.name || n),
+              base: (item.notes?.base || []).map((n: any) => n.name || n),
             },
           }));
           setApiResults(mapped);
