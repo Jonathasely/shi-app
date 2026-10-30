@@ -38,14 +38,14 @@ function formatBaseCode(code: string): string {
 /* ─── Shared styles ────────────────────────────────────────── */
 const btnP: React.CSSProperties = {
   width: "100%",
-  padding: "16px",
+  padding: "var(--shi-btn-pad)",
   border: "none",
   borderRadius: 0,
   background: C.dark,
   color: C.card,
-  fontSize: 11,
+  fontSize: "var(--shi-btn-fs)",
   fontWeight: 600,
-  letterSpacing: "2.5px",
+  letterSpacing: "var(--shi-btn-ls)",
   textTransform: "uppercase",
   cursor: "pointer",
   fontFamily: "inherit",
@@ -59,21 +59,21 @@ const btnS: React.CSSProperties = {
 };
 const inp: React.CSSProperties = {
   width: "100%",
-  padding: "13px 0",
+  padding: "var(--shi-input-pad) 0",
   background: "transparent",
   border: "none",
   borderBottom: `1px solid ${C.border}`,
   color: C.dark,
-  fontSize: 16,
+  fontSize: "var(--shi-input)",
   borderRadius: 0,
   boxSizing: "border-box",
   fontFamily: "inherit",
   outline: "none",
 };
 const lbl: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: "var(--shi-label)",
   color: C.g2,
-  letterSpacing: "2px",
+  letterSpacing: "var(--shi-label-ls)",
   textTransform: "uppercase",
   marginBottom: 4,
   display: "block",
@@ -81,29 +81,28 @@ const lbl: React.CSSProperties = {
 
 /* ─── Components ───────────────────────────────────────────── */
 function Logo({ size }: { size: "lg" | "md" | "sm" }) {
-  const s = size === "lg" ? 52 : size === "sm" ? 26 : 38;
+  const s = size === "lg" ? "var(--shi-logo)" : size === "sm" ? "26px" : "38px";
+  const ls = size === "lg" ? "var(--shi-logo-ls)" : "6px";
   return (
     <div style={{ textAlign: "center" }}>
       <div
-        className={size === "lg" ? "shi-logo-lg" : ""}
         style={{
           fontFamily: serif,
           fontSize: s,
           fontWeight: 400,
           color: C.dark,
-          letterSpacing: 6,
+          letterSpacing: ls,
           lineHeight: 1,
         }}
       >
         SHI
       </div>
       <div
-        className={size === "lg" ? "shi-logo-sub" : ""}
         style={{
-          fontSize: Math.max(s * 0.2, 9),
+          fontSize: size === "lg" ? "var(--shi-logo-sub)" : "9px",
           fontWeight: 300,
           color: C.g2,
-          letterSpacing: 4,
+          letterSpacing: size === "lg" ? "var(--shi-logo-sub-ls)" : "4px",
           textTransform: "uppercase",
           marginTop: 3,
         }}
@@ -116,7 +115,7 @@ function Logo({ size }: { size: "lg" | "md" | "sm" }) {
 
 function Dots({ current, total }: { current: number; total: number }) {
   return (
-    <div className="shi-dots" style={{ display: "flex", gap: 8, justifyContent: "center", padding: "16px 0 12px" }}>
+    <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: "var(--shi-dots-pad)" }}>
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
@@ -196,25 +195,40 @@ html,body{background:${C.bg}}
 @keyframes shi-scaleIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
 @keyframes shi-fadeInSS{from{opacity:0}to{opacity:1}}
 
-/* ── Totem: telas altas (>900px height) = fontes maiores ── */
+/* ── CSS Variables: valores padrão (celular) ── */
+:root {
+  --shi-logo:52px; --shi-logo-ls:6px; --shi-logo-sub:9px; --shi-logo-sub-ls:4px;
+  --shi-welcome-sub:9px; --shi-welcome-sub-ls:3px; --shi-welcome-sub-lh:2; --shi-welcome-sub-mw:220px;
+  --shi-welcome-title:22px; --shi-welcome-title-mw:280px;
+  --shi-welcome-input:13px; --shi-welcome-input-pad:13px;
+  --shi-btn-fs:11px; --shi-btn-pad:16px; --shi-btn-ls:2.5px; --shi-btn-mw:260px;
+  --shi-label:10px; --shi-label-ls:2px;
+  --shi-input:16px; --shi-input-pad:13px;
+  --shi-section-title:20px;
+  --shi-checkbox:11px;
+  --shi-frame-mw:600px; --shi-frame-pad:24px;
+  --shi-dots-pad:16px 0 12px;
+  --shi-search-name:14px; --shi-search-brand:12px;
+  --shi-accord-fs:9px; --shi-accord-pad:3px 8px;
+}
+
+/* ── Totem: telas altas (>900px height AND >600px width) ── */
 @media (min-height:900px) and (min-width:600px) {
-  .shi-welcome-sub{font-size:14px!important;max-width:380px!important;letter-spacing:4px!important;line-height:2.2!important}
-  .shi-welcome-title{font-size:36px!important;max-width:460px!important}
-  .shi-welcome-input{font-size:18px!important;padding:18px 0!important}
-  .shi-welcome-btn{font-size:14px!important;padding:20px!important;max-width:360px!important;letter-spacing:3px!important}
-  .shi-logo-lg{font-size:80px!important;letter-spacing:10px!important}
-  .shi-logo-sub{font-size:16px!important;letter-spacing:6px!important}
-  .shi-dots{padding:24px 0 20px!important}
-  .shi-section-title{font-size:28px!important}
-  .shi-label{font-size:13px!important;letter-spacing:3px!important}
-  .shi-input{font-size:20px!important;padding:18px 0!important}
-  .shi-btn-primary{font-size:14px!important;padding:20px!important;letter-spacing:3px!important}
-  .shi-body-text{font-size:16px!important}
-  .shi-small-text{font-size:14px!important}
-  .shi-search-result{font-size:18px!important}
-  .shi-accord-tag{font-size:12px!important;padding:4px 10px!important}
-  .shi-checkbox-text{font-size:14px!important}
-  .shi-frame{max-width:800px!important;padding:0 40px!important}
+  :root {
+    --shi-logo:80px; --shi-logo-ls:10px; --shi-logo-sub:16px; --shi-logo-sub-ls:6px;
+    --shi-welcome-sub:14px; --shi-welcome-sub-ls:4px; --shi-welcome-sub-lh:2.2; --shi-welcome-sub-mw:380px;
+    --shi-welcome-title:36px; --shi-welcome-title-mw:460px;
+    --shi-welcome-input:18px; --shi-welcome-input-pad:18px;
+    --shi-btn-fs:14px; --shi-btn-pad:20px; --shi-btn-ls:3px; --shi-btn-mw:360px;
+    --shi-label:13px; --shi-label-ls:3px;
+    --shi-input:20px; --shi-input-pad:18px;
+    --shi-section-title:28px;
+    --shi-checkbox:14px;
+    --shi-frame-mw:800px; --shi-frame-pad:40px;
+    --shi-dots-pad:24px 0 20px;
+    --shi-search-name:18px; --shi-search-brand:14px;
+    --shi-accord-fs:12px; --shi-accord-pad:4px 10px;
+  }
 }
 
 /* ── Screensaver ── */
@@ -519,7 +533,7 @@ export default function EventoPage() {
   /* ── frame (mobile fullscreen, max-width for large screens) */
   const frame: React.CSSProperties = {
     width: "100%",
-    maxWidth: 600,
+    maxWidth: "var(--shi-frame-mw)",
     margin: "0 auto",
     minHeight: "100vh",
     background: C.bg,
@@ -586,7 +600,7 @@ export default function EventoPage() {
       >
         <div
           style={{
-            padding: "0 24px",
+            padding: "0 var(--shi-frame-pad)",
             opacity: fade ? 1 : 0,
             transition: "opacity .25s ease",
             flex: 1,
@@ -610,16 +624,15 @@ export default function EventoPage() {
               <Logo size="lg" />
 
               <div
-                className="shi-welcome-sub"
                 style={{
-                  fontSize: 9,
-                  letterSpacing: 3,
+                  fontSize: "var(--shi-welcome-sub)",
+                  letterSpacing: "var(--shi-welcome-sub-ls)",
                   color: C.g2,
                   textTransform: "uppercase",
-                  lineHeight: 2,
+                  lineHeight: "var(--shi-welcome-sub-lh)",
                   marginTop: 28,
                   marginBottom: 24,
-                  maxWidth: 220,
+                  maxWidth: "var(--shi-welcome-sub-mw)",
                   fontWeight: 300,
                 }}
               >
@@ -627,14 +640,13 @@ export default function EventoPage() {
               </div>
 
               <div
-                className="shi-welcome-title"
                 style={{
                   fontFamily: serif,
-                  fontSize: 22,
+                  fontSize: "var(--shi-welcome-title)",
                   color: C.dark,
                   fontWeight: 600,
                   lineHeight: 1.4,
-                  maxWidth: 280,
+                  maxWidth: "var(--shi-welcome-title-mw)",
                   marginBottom: 32,
                 }}
               >
@@ -658,20 +670,20 @@ export default function EventoPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handlePass();
                   }}
-                  className="shi-welcome-input"
                   style={{
                     ...inp,
                     textAlign: "center",
                     letterSpacing: 4,
                     textTransform: "uppercase",
-                    fontSize: 13,
+                    fontSize: "var(--shi-welcome-input)",
+                    padding: "var(--shi-welcome-input-pad) 0",
                   }}
                 />
                 {evtErr && (
                   <div style={{ color: "#B85C4D", fontSize: 11, marginTop: 8 }}>Senha incorreta</div>
                 )}
               </div>
-              <button onClick={handlePass} className="shi-welcome-btn" style={{ ...btnP, maxWidth: 260 }}>
+              <button onClick={handlePass} style={{ ...btnP, maxWidth: "var(--shi-btn-mw)", fontSize: "var(--shi-btn-fs)", padding: "var(--shi-btn-pad)", letterSpacing: "var(--shi-btn-ls)" }}>
                 Entrar
               </button>
             </div>
@@ -686,50 +698,46 @@ export default function EventoPage() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
                 <div>
-                  <div className="shi-label" style={lbl}>Seu nome</div>
+                  <div style={lbl}>Seu nome</div>
                   <input
                     type="text"
                     autoComplete="given-name"
                     placeholder="Seu nome"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    className="shi-input"
                     style={inp}
                   />
                 </div>
                 <div>
-                  <div className="shi-label" style={lbl}>Sobrenome</div>
+                  <div style={lbl}>Sobrenome</div>
                   <input
                     type="text"
                     autoComplete="family-name"
                     placeholder="Seu sobrenome"
                     value={formSurname}
                     onChange={(e) => setFormSurname(e.target.value)}
-                    className="shi-input"
                     style={inp}
                   />
                 </div>
                 <div>
-                  <div className="shi-label" style={lbl}>E-mail</div>
+                  <div style={lbl}>E-mail</div>
                   <input
                     type="email"
                     autoComplete="email"
                     placeholder="Seu e-mail"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
-                    className="shi-input"
                     style={inp}
                   />
                 </div>
                 <div>
-                  <div className="shi-label" style={lbl}>Telefone</div>
+                  <div style={lbl}>Telefone</div>
                   <input
                     type="tel"
                     autoComplete="tel"
                     placeholder="Seu telefone"
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
-                    className="shi-input"
                     style={inp}
                   />
                 </div>
@@ -767,7 +775,7 @@ export default function EventoPage() {
                 >
                   {formMkt && <span style={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>✓</span>}
                 </div>
-                <div className="shi-checkbox-text" style={{ fontSize: 11, color: formMktErr ? "#B85C4D" : C.g2, lineHeight: 1.5 }}>
+                <div style={{ fontSize: "var(--shi-checkbox)", color: formMktErr ? "#B85C4D" : C.g2, lineHeight: 1.5 }}>
                   Aceito receber comunicações, novidades e experiências exclusivas da SHI Aroma Lab por e-mail, SMS ou WhatsApp. *
                 </div>
               </div>
@@ -778,7 +786,6 @@ export default function EventoPage() {
               )}
               <button
                 onClick={handleRegister}
-                className="shi-btn-primary"
                 style={{
                   ...btnP,
                   marginTop: 4,
@@ -799,7 +806,7 @@ export default function EventoPage() {
                 <div
                   style={{
                     fontFamily: serif,
-                    fontSize: 20,
+                    fontSize: "var(--shi-section-title)",
                     color: C.dark,
                     fontWeight: 400,
                     lineHeight: 1.4,
@@ -809,7 +816,7 @@ export default function EventoPage() {
                 >
                   Quais seus perfumes preferidos?
                 </div>
-                <div style={{ fontSize: 13, color: C.g2, marginTop: 8, fontWeight: 300, lineHeight: 1.5 }}>
+                <div style={{ fontSize: "var(--shi-checkbox)", color: C.g2, marginTop: 8, fontWeight: 300, lineHeight: 1.5 }}>
                   Selecione exatamente 3 fragrâncias que você ama
                 </div>
               </div>
