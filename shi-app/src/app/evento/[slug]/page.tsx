@@ -233,6 +233,12 @@ html,body{background:${C.bg}}
   --shi-form-gap:18px;
   --shi-checkbox-box:18px;
   --shi-checkbox-check:10px;
+  --shi-search-img:44px;
+  --shi-search-initial:14px;
+  --shi-search-gap:10px;
+  --shi-search-accord-gap:4px;
+  --shi-error-fs:11px;
+  --shi-pass-mw:260px;
 }
 
 /* ── Totem: telas altas (>900px height AND >600px width) ── */
@@ -274,6 +280,12 @@ html,body{background:${C.bg}}
     --shi-form-gap:28px;
     --shi-checkbox-box:24px;
     --shi-checkbox-check:14px;
+    --shi-search-img:64px;
+    --shi-search-initial:20px;
+    --shi-search-gap:16px;
+    --shi-search-accord-gap:6px;
+    --shi-error-fs:16px;
+    --shi-pass-mw:400px;
   }
 }
 
@@ -323,6 +335,7 @@ export default function EventoPage() {
   const [results, setResults] = useState<{ base: Base; score: number }[]>([]);
   const [profileResult, setProfileResult] = useState<ProfileResult | null>(null);
   const [passportCode, setPassportCode] = useState("");
+  const [shareMsg, setShareMsg] = useState("");
 
   // Bases from DB
   const [bases, setBases] = useState<Base[]>([]);
@@ -513,8 +526,28 @@ export default function EventoPage() {
     setSlots(ns);
   };
 
+  /* ── Form validation helpers ── */
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    const name = formName.trim();
+    const surname = formSurname.trim();
+    const email = formEmail.trim();
+    const phone = formPhone.replace(/\D/g, "");
+
+    if (name.length < 2 || !/[a-zA-ZÀ-ÿ]/.test(name)) errors.name = "Nome inválido";
+    if (surname.length < 2 || !/[a-zA-ZÀ-ÿ]/.test(surname)) errors.surname = "Sobrenome inválido";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) errors.email = "E-mail inválido";
+    if (phone.length < 10 || phone.length > 11) errors.phone = "Telefone inválido";
+
+    return errors;
+  };
+
   const handleRegister = () => {
-    if (!formName.trim() || !formSurname.trim() || !formEmail.trim() || !formPhone.trim()) return;
+    const errors = validateForm();
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
     if (!formMkt) {
       setFormMktErr(true);
       return;
@@ -699,7 +732,7 @@ export default function EventoPage() {
                 {welcomeLine2}
               </div>
 
-              <div style={{ width: "100%", maxWidth: 260, marginBottom: 16 }}>
+              <div style={{ width: "100%", maxWidth: "var(--shi-pass-mw)", marginBottom: 16 }}>
                 <input
                   type="text"
                   inputMode="text"
@@ -726,7 +759,7 @@ export default function EventoPage() {
                   }}
                 />
                 {evtErr && (
-                  <div style={{ color: "#B85C4D", fontSize: 11, marginTop: 8 }}>Senha incorreta</div>
+                  <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 8 }}>Senha incorreta</div>
                 )}
               </div>
               <button onClick={handlePass} style={{ ...btnP, maxWidth: "var(--shi-btn-mw)", fontSize: "var(--shi-btn-fs)", padding: "var(--shi-btn-pad)", letterSpacing: "var(--shi-btn-ls)" }}>
@@ -750,9 +783,10 @@ export default function EventoPage() {
                     autoComplete="given-name"
                     placeholder="Seu nome"
                     value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                    style={inp}
+                    onChange={(e) => { setFormName(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.name; return n; }); }}
+                    style={{ ...inp, borderColor: formErrors.name ? "#B85C4D" : C.g4 }}
                   />
+                  {formErrors.name && <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 4 }}>{formErrors.name}</div>}
                 </div>
                 <div>
                   <div style={lbl}>Sobrenome</div>
@@ -761,9 +795,10 @@ export default function EventoPage() {
                     autoComplete="family-name"
                     placeholder="Seu sobrenome"
                     value={formSurname}
-                    onChange={(e) => setFormSurname(e.target.value)}
-                    style={inp}
+                    onChange={(e) => { setFormSurname(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.surname; return n; }); }}
+                    style={{ ...inp, borderColor: formErrors.surname ? "#B85C4D" : C.g4 }}
                   />
+                  {formErrors.surname && <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 4 }}>{formErrors.surname}</div>}
                 </div>
                 <div>
                   <div style={lbl}>E-mail</div>
@@ -772,20 +807,22 @@ export default function EventoPage() {
                     autoComplete="email"
                     placeholder="Seu e-mail"
                     value={formEmail}
-                    onChange={(e) => setFormEmail(e.target.value)}
-                    style={inp}
+                    onChange={(e) => { setFormEmail(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.email; return n; }); }}
+                    style={{ ...inp, borderColor: formErrors.email ? "#B85C4D" : C.g4 }}
                   />
+                  {formErrors.email && <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 4 }}>{formErrors.email}</div>}
                 </div>
                 <div>
                   <div style={lbl}>Telefone</div>
                   <input
                     type="tel"
                     autoComplete="tel"
-                    placeholder="Seu telefone"
+                    placeholder="(61) 99999-9999"
                     value={formPhone}
-                    onChange={(e) => setFormPhone(e.target.value)}
-                    style={inp}
+                    onChange={(e) => { setFormPhone(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.phone; return n; }); }}
+                    style={{ ...inp, borderColor: formErrors.phone ? "#B85C4D" : C.g4 }}
                   />
+                  {formErrors.phone && <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 4 }}>{formErrors.phone}</div>}
                 </div>
               </div>
               <div
@@ -826,7 +863,7 @@ export default function EventoPage() {
                 </div>
               </div>
               {formMktErr && (
-                <div style={{ fontSize: 11, color: "#B85C4D", marginBottom: 8, marginTop: -4 }}>
+                <div style={{ fontSize: "var(--shi-error-fs)", color: "#B85C4D", marginBottom: 8, marginTop: -4 }}>
                   Para continuar, é necessário aceitar o recebimento de comunicações.
                 </div>
               )}
@@ -1048,8 +1085,8 @@ export default function EventoPage() {
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 12,
-                            padding: "10px 0",
+                            gap: "var(--shi-search-gap)",
+                            padding: "var(--shi-search-gap) 0",
                             borderBottom: `0.5px solid ${C.g5}`,
                             cursor: "pointer",
                           }}
@@ -1059,8 +1096,8 @@ export default function EventoPage() {
                               src={pi.image}
                               alt={p.name}
                               style={{
-                                width: 44,
-                                height: 44,
+                                width: "var(--shi-search-img)",
+                                height: "var(--shi-search-img)",
                                 objectFit: "contain",
                                 flexShrink: 0,
                                 background: C.white,
@@ -1073,8 +1110,8 @@ export default function EventoPage() {
                           ) : (
                             <div
                               style={{
-                                width: 44,
-                                height: 44,
+                                width: "var(--shi-search-img)",
+                                height: "var(--shi-search-img)",
                                 background: C.alt,
                                 border: `1px solid ${C.g5}`,
                                 display: "flex",
@@ -1083,14 +1120,14 @@ export default function EventoPage() {
                                 flexShrink: 0,
                               }}
                             >
-                              <span style={{ fontSize: 14, color: C.g1, fontWeight: 500 }}>{p.name[0]}</span>
+                              <span style={{ fontSize: "var(--shi-search-initial)", color: C.g1, fontWeight: 500 }}>{p.name[0]}</span>
                             </div>
                           )}
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: "var(--shi-search-name)", color: C.dark, fontWeight: 500 }}>{p.name}</div>
                             <div style={{ fontSize: "var(--shi-search-brand)", color: C.g2, fontWeight: 300 }}>{p.brand}</div>
                             {p.accords && p.accords.length > 0 && (
-                              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 3 }}>
+                              <div style={{ display: "flex", gap: "var(--shi-search-accord-gap)", flexWrap: "wrap", marginTop: 3 }}>
                                 {p.accords.slice(0, 3).map((a, i) => (
                                   <span
                                     key={i}
@@ -1632,24 +1669,37 @@ export default function EventoPage() {
                         "Descubra o seu em shi.com.br",
                       ].join("\n");
 
-                      if (navigator.share) {
+                      // Try Web Share API first (mobile)
+                      if (typeof navigator.share === "function") {
                         try {
                           await navigator.share({ title: "Passaporte Olfativo SHI", text });
+                          return;
                         } catch {
-                          /* user cancelled */
+                          // user cancelled or share failed — fall through to clipboard
                         }
-                      } else {
-                        try {
-                          await navigator.clipboard.writeText(text);
-                          alert("Copiado! Cole onde quiser compartilhar.");
-                        } catch {
-                          /* fallback: do nothing */
-                        }
+                      }
+                      // Fallback: copy to clipboard
+                      try {
+                        await navigator.clipboard.writeText(text);
+                        setShareMsg("Copiado!");
+                        setTimeout(() => setShareMsg(""), 2500);
+                      } catch {
+                        // Last resort: select text
+                        const ta = document.createElement("textarea");
+                        ta.value = text;
+                        ta.style.position = "fixed";
+                        ta.style.opacity = "0";
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(ta);
+                        setShareMsg("Copiado!");
+                        setTimeout(() => setShareMsg(""), 2500);
                       }
                     }}
                     style={{ ...btnS, flex: 1, fontSize: "var(--shi-hint)", letterSpacing: 1.5 }}
                   >
-                    Compartilhar
+                    {shareMsg || "Compartilhar"}
                   </button>
                   <button onClick={reset} style={{ ...btnS, flex: 1, fontSize: "var(--shi-hint)", letterSpacing: 1.5 }}>
                     Início
