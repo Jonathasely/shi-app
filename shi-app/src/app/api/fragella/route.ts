@@ -28,23 +28,45 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const url = `${API_BASE}/fragrances?search=${encodeURIComponent(search)}&limit=${limit}`;
-    const res = await fetch(url, {
-      headers: { "x-api-key": API_KEY },
-      next: { revalidate: 3600 },
-    });
+    // Fetch page 1 and page 2 in parallel to get up to 20 results
+    const baseUrl = `${API_BASE}/fragrances?search=${encodeURIComponent(search)}&limit=10`;
+    const [res1, res2] = await Promise.all([
+      fetch(`${baseUrl}&page=1`, {
+        headers: { "x-api-key": API_KEY },
+        next: { revalidate: 3600 },
+      }),
+      fetch(`${baseUrl}&page=2`, {
+        headers: { "x-api-key": API_KEY },
+        next: { revalidate: 3600 },
+      }),
+    ]);
 
-    if (!res.ok) {
+    if (!res1.ok) {
       return NextResponse.json(
-        { error: `Fragella API error: ${res.status}` },
-        { status: res.status }
+        { error: `Fragella API error: ${res1.status}` },
+        { status: res1.status }
       );
     }
 
-    const data = await res.json();
+    const data1 = await res1.json();
+    const items1 = Array.isArray(data1) ? data1 : data1.data || [];
 
-    // Normalize — API returns array directly
-    const items = Array.isArray(data) ? data : data.data || [];
+    let items2: any[] = [];
+    if (res2.ok) {
+      const data2 = await res2.json();
+      items2 = Array.isArray(data2) ? data2 : data2.data || [];
+    }
+
+    // Combine both pages, deduplicate by _id
+    const seen = new Set<string>();
+    const items: any[] = [];
+    for (const item of [...items1, ...items2]) {
+      const id = item._id || item.id || item.name || "";
+      if (!seen.has(id)) {
+        seen.add(id);
+        items.push(item);
+      }
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const perfumes = items.map((item: any) => {

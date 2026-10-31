@@ -210,7 +210,7 @@ html,body{background:${C.bg}}
   --shi-frame-mw:600px; --shi-frame-pad:24px;
   --shi-dots-pad:16px 0 12px;
   --shi-search-input:14px;
-  --shi-search-name:13px; --shi-search-brand:10px;
+  --shi-search-name:15px; --shi-search-brand:12px;
   --shi-accord-fs:8px; --shi-accord-pad:1px 5px;
   --shi-notes-tag:10px; --shi-notes-tag-pad:3px 8px;
   --shi-notes-label:9px;
@@ -233,9 +233,9 @@ html,body{background:${C.bg}}
   --shi-form-gap:18px;
   --shi-checkbox-box:18px;
   --shi-checkbox-check:10px;
-  --shi-search-img:44px;
-  --shi-search-initial:14px;
-  --shi-search-gap:10px;
+  --shi-search-img:52px;
+  --shi-search-initial:16px;
+  --shi-search-gap:12px;
   --shi-search-accord-gap:4px;
   --shi-error-fs:11px;
   --shi-pass-mw:260px;
@@ -446,7 +446,7 @@ export default function EventoPage() {
     const timer = setTimeout(async () => {
       setApiLoading(true);
       try {
-        const res = await fetch(`/api/fragella?search=${encodeURIComponent(searchVal)}&limit=10`);
+        const res = await fetch(`/api/fragella?search=${encodeURIComponent(searchVal)}&limit=20`);
         const json = await res.json();
         if (json.data && json.data.length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -770,12 +770,12 @@ export default function EventoPage() {
 
           {/* ═══════ REGISTER ═══════ */}
           {screen === "register" && (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 0 24px" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 0 24px" }}>
               <Dots current={0} total={4} />
-              <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <div style={{ textAlign: "center", marginBottom: 28 }}>
                 <Logo size="md" />
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--shi-form-gap)", flex: 1 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--shi-form-gap)", textAlign: "center" }}>
                 <div>
                   <div style={lbl}>Seu nome</div>
                   <input
@@ -784,7 +784,7 @@ export default function EventoPage() {
                     placeholder="Seu nome"
                     value={formName}
                     onChange={(e) => { setFormName(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.name; return n; }); }}
-                    style={{ ...inp, borderColor: formErrors.name ? "#B85C4D" : C.g4 }}
+                    style={{ ...inp, textAlign: "center", borderColor: formErrors.name ? "#B85C4D" : C.g4 }}
                   />
                   {formErrors.name && <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 4 }}>{formErrors.name}</div>}
                 </div>
@@ -796,7 +796,7 @@ export default function EventoPage() {
                     placeholder="Seu sobrenome"
                     value={formSurname}
                     onChange={(e) => { setFormSurname(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.surname; return n; }); }}
-                    style={{ ...inp, borderColor: formErrors.surname ? "#B85C4D" : C.g4 }}
+                    style={{ ...inp, textAlign: "center", borderColor: formErrors.surname ? "#B85C4D" : C.g4 }}
                   />
                   {formErrors.surname && <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 4 }}>{formErrors.surname}</div>}
                 </div>
@@ -808,7 +808,7 @@ export default function EventoPage() {
                     placeholder="Seu e-mail"
                     value={formEmail}
                     onChange={(e) => { setFormEmail(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.email; return n; }); }}
-                    style={{ ...inp, borderColor: formErrors.email ? "#B85C4D" : C.g4 }}
+                    style={{ ...inp, textAlign: "center", borderColor: formErrors.email ? "#B85C4D" : C.g4 }}
                   />
                   {formErrors.email && <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 4 }}>{formErrors.email}</div>}
                 </div>
@@ -820,7 +820,7 @@ export default function EventoPage() {
                     placeholder="(61) 99999-9999"
                     value={formPhone}
                     onChange={(e) => { setFormPhone(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.phone; return n; }); }}
-                    style={{ ...inp, borderColor: formErrors.phone ? "#B85C4D" : C.g4 }}
+                    style={{ ...inp, textAlign: "center", borderColor: formErrors.phone ? "#B85C4D" : C.g4 }}
                   />
                   {formErrors.phone && <div style={{ color: "#B85C4D", fontSize: "var(--shi-error-fs)", marginTop: 4 }}>{formErrors.phone}</div>}
                 </div>
@@ -1075,7 +1075,7 @@ export default function EventoPage() {
                       Nenhum resultado para &ldquo;{searchVal}&rdquo;
                     </div>
                   )}
-                  <div style={{ maxHeight: 320, overflowY: "auto" }}>
+                  <div style={{ maxHeight: 400, overflowY: "auto" }}>
                     {filtered.map((p) => {
                       const pi = p as PerfumeWithImage;
                       return (
@@ -1325,9 +1325,9 @@ export default function EventoPage() {
 
           {/* ═══════ RESULT ═══════ */}
           {screen === "result" && results.length > 0 && (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 0 24px" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 0 24px" }}>
               <Dots current={2} total={4} />
-              <div style={{ animation: "shi-fadeUp .6s ease", flex: 1, display: "flex", flexDirection: "column" }}>
+              <div style={{ animation: "shi-fadeUp .6s ease", display: "flex", flexDirection: "column" }}>
                 {/* Logo */}
                 <div style={{ textAlign: "center", marginBottom: 12 }}>
                   <Logo size="sm" />
