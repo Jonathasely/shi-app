@@ -817,9 +817,9 @@ export default function EventoPage() {
 
           {/* ═══════ REGISTER ═══════ */}
           {screen === "register" && (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 0 24px" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(8px, 2vh, 24px) 0 24px" }}>
               <Dots current={0} total={4} />
-              <div style={{ textAlign: "center", marginBottom: "clamp(28px, 4vh, 48px)" }}>
+              <div style={{ textAlign: "center", marginBottom: "clamp(28px, 5vh, 56px)" }}>
                 <Logo size="md" />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--shi-form-gap)", textAlign: "center" }}>
@@ -918,7 +918,7 @@ export default function EventoPage() {
                 onClick={handleRegister}
                 style={{
                   ...btnP,
-                  marginTop: 4,
+                  marginTop: "clamp(8px, 2vh, 24px)",
                   opacity:
                     formName.trim() && formSurname.trim() && formEmail.trim() && formPhone.trim() ? 1 : 0.4,
                 }}
@@ -1279,7 +1279,7 @@ export default function EventoPage() {
 
               {/* Analyze button */}
               {filledCount >= 1 && activeSlot < 0 && (
-                <div style={{ marginTop: "auto" }}>
+                <div style={{ marginTop: "clamp(12px, 2vh, 24px)" }}>
                   <button
                     onClick={analyze}
                     style={{ ...btnP, opacity: filledCount === 3 ? 1 : 0.4 }}
@@ -1704,16 +1704,29 @@ export default function EventoPage() {
                   <button
                     onClick={async () => {
                       const mainBase = results[0]?.base;
+                      const chosenPerfumes = slots.filter(Boolean).map((p) => `• ${p!.name}`).join("\n");
                       const text = [
-                        `Meu Passaporte Olfativo — ${event.name}`,
-                        `Código: ${passportCode}`,
+                        "PASSAPORTE OLFATIVO",
+                        "SHI AROMA LAB",
                         "",
-                        `Meu perfil: ${mainBase?.name}`,
-                        `Fragrância: ${formatBaseCode(mainBase?.code || "")}`,
+                        "Sua experiência fica na memória.",
+                        "Sua assinatura olfativa fica registrada aqui.",
                         "",
-                        `Perfumes escolhidos: ${slots.filter(Boolean).map((p) => p!.name).join(", ")}`,
+                        `Evento: ${event.name}`,
+                        `Código da experiência: ${passportCode}`,
                         "",
-                        "Descubra o seu em shi.com.br",
+                        "Seu perfil olfativo",
+                        `${mainBase?.name} | ${formatBaseCode(mainBase?.code || "")}`,
+                        "",
+                        "Fragrâncias que você escolheu",
+                        chosenPerfumes,
+                        "",
+                        "Guarde este passaporte para consultar suas escolhas e continuar explorando o universo das fragrâncias com a SHI.",
+                        "",
+                        "Singular. Hedônico. Inesquecível.",
+                        "shiaromalab.com.br",
+                        "@shi.aroma.lab",
+                        "(61) 99687-2711",
                       ].join("\n");
 
                       // Try Web Share API first (mobile)

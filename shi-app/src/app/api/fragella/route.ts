@@ -11,6 +11,58 @@ const ACCORD_PERCENT: Record<string, number> = {
   Faint: 15,
 };
 
+/* Tradução de accords EN → PT para match com as bases do Supabase */
+const ACCORD_PT: Record<string, string> = {
+  floral: "Floral",
+  sweet: "Doce",
+  woody: "Amadeirado",
+  fresh: "Fresco",
+  citrus: "Cítrico",
+  fruity: "Frutado",
+  musky: "Musk",
+  powdery: "Empolvado",
+  warm: "Quente",
+  spicy: "Especiado",
+  aromatic: "Aromático",
+  amber: "Âmbar",
+  vanilla: "Baunilha",
+  leather: "Couro",
+  smoky: "Defumado",
+  aquatic: "Aquático",
+  green: "Verde",
+  oriental: "Oriental",
+  balsamic: "Balsâmico",
+  herbal: "Herbal",
+  earthy: "Terroso",
+  gourmand: "Gourmand",
+  oud: "Oud",
+  rose: "Rosa",
+  tropical: "Tropical",
+  mossy: "Musgoso",
+  ozonic: "Ozônico",
+  creamy: "Cremoso",
+  nutty: "Avelã",
+  animalic: "Animalic",
+  soapy: "Ensaboado",
+  patchouli: "Patchouli",
+  lavender: "Lavanda",
+  marine: "Marinho",
+  aldehydic: "Aldeídico",
+  tobacco: "Tabaco",
+  cinnamon: "Canela",
+  coconut: "Coco",
+  honey: "Mel",
+  iris: "Íris",
+  jasmine: "Jasmim",
+  soft: "Suave",
+  metallic: "Metálico",
+  "warm spicy": "Especiado Quente",
+  "fresh spicy": "Especiado Fresco",
+  "white floral": "Floral Branco",
+  "yellow floral": "Floral Amarelo",
+  "sweet floral": "Floral Doce",
+};
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";
@@ -77,7 +129,7 @@ export async function GET(req: NextRequest) {
         item.accordsPercentage || item["Main Accords Percentage"] || {};
 
       const mappedAccords = accords.map((name: string) => ({
-        name,
+        name: ACCORD_PT[name.toLowerCase()] || name,
         value: ACCORD_PERCENT[pctObj[name]] || 50,
       }));
 
