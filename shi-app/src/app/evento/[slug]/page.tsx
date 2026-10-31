@@ -241,6 +241,53 @@ html,body{background:${C.bg}}
   --shi-pass-mw:260px;
 }
 
+/* ── Celulares grandes (altura ≥ 700px, largura < 600px) ── */
+@media (min-height:700px) and (max-width:599px) {
+  :root {
+    --shi-logo:72px; --shi-logo-ls:8px; --shi-logo-sub:12px; --shi-logo-sub-ls:5px;
+    --shi-logo-md:48px; --shi-logo-md-ls:7px; --shi-logo-md-sub:11px;
+    --shi-welcome-sub:12px; --shi-welcome-sub-ls:3.5px; --shi-welcome-sub-lh:2.2; --shi-welcome-sub-mw:280px;
+    --shi-welcome-title:26px; --shi-welcome-title-mw:320px;
+    --shi-welcome-input:15px; --shi-welcome-input-pad:16px;
+    --shi-btn-fs:13px; --shi-btn-pad:18px; --shi-btn-ls:3px; --shi-btn-mw:300px;
+    --shi-label:12px; --shi-label-ls:2.5px;
+    --shi-input:18px; --shi-input-pad:14px;
+    --shi-section-title:24px;
+    --shi-checkbox:13px;
+    --shi-dots-pad:20px 0 16px;
+    --shi-search-input:16px;
+    --shi-search-name:17px; --shi-search-brand:13px;
+    --shi-accord-fs:10px; --shi-accord-pad:2px 7px;
+    --shi-notes-tag:12px; --shi-notes-tag-pad:4px 10px;
+    --shi-notes-label:11px;
+    --shi-progress-text:12px;
+    --shi-slot-w:110px; --shi-slot-h:120px; --shi-slot-img:48px;
+    --shi-slot-name:12px; --shi-slot-brand:10px; --shi-slot-placeholder:11px;
+    --shi-analyze-text:14px; --shi-analyze-s:22px;
+    --shi-result-name:32px; --shi-result-desc:13px; --shi-result-code:34px;
+    --shi-result-score:13px; --shi-result-profile:14px;
+    --shi-alt-code:18px; --shi-alt-name:14px; --shi-alt-score:12px;
+    --shi-section-label:11px; --shi-section-label-ls:2.5px;
+    --shi-ref-text:15px;
+    --shi-passport-label:11px; --shi-passport-name:13px;
+    --shi-passport-base:26px; --shi-passport-frag:24px;
+    --shi-passport-ref:14px; --shi-passport-event:11px;
+    --shi-cta-fs:11px;
+    --shi-hint:12px;
+    --shi-search-msg:14px;
+    --shi-search-hint:12px;
+    --shi-form-gap:22px;
+    --shi-checkbox-box:20px;
+    --shi-checkbox-check:12px;
+    --shi-search-img:60px;
+    --shi-search-initial:18px;
+    --shi-search-gap:14px;
+    --shi-search-accord-gap:5px;
+    --shi-error-fs:13px;
+    --shi-pass-mw:300px;
+  }
+}
+
 /* ── Totem: telas altas (>900px height AND >600px width) ── */
 @media (min-height:900px) and (min-width:600px) {
   :root {
@@ -709,8 +756,8 @@ export default function EventoPage() {
                   color: C.g2,
                   textTransform: "uppercase",
                   lineHeight: "var(--shi-welcome-sub-lh)",
-                  marginTop: 28,
-                  marginBottom: 24,
+                  marginTop: "clamp(28px, 5vh, 56px)",
+                  marginBottom: "clamp(24px, 4vh, 48px)",
                   maxWidth: "var(--shi-welcome-sub-mw)",
                   fontWeight: 300,
                 }}
@@ -726,13 +773,13 @@ export default function EventoPage() {
                   fontWeight: 600,
                   lineHeight: 1.4,
                   maxWidth: "var(--shi-welcome-title-mw)",
-                  marginBottom: 32,
+                  marginBottom: "clamp(32px, 5vh, 56px)",
                 }}
               >
                 {welcomeLine2}
               </div>
 
-              <div style={{ width: "100%", maxWidth: "var(--shi-pass-mw)", marginBottom: 16 }}>
+              <div style={{ width: "100%", maxWidth: "var(--shi-pass-mw)", marginBottom: "clamp(16px, 3vh, 32px)" }}>
                 <input
                   type="text"
                   inputMode="text"
@@ -772,7 +819,7 @@ export default function EventoPage() {
           {screen === "register" && (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 0 24px" }}>
               <Dots current={0} total={4} />
-              <div style={{ textAlign: "center", marginBottom: 28 }}>
+              <div style={{ textAlign: "center", marginBottom: "clamp(28px, 4vh, 48px)" }}>
                 <Logo size="md" />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--shi-form-gap)", textAlign: "center" }}>
@@ -883,9 +930,9 @@ export default function EventoPage() {
 
           {/* ═══════ SEARCH ═══════ */}
           {screen === "search" && (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 0 24px" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 0 24px" }}>
               <Dots current={1} total={4} />
-              <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ textAlign: "center", marginBottom: "clamp(16px, 2.5vh, 28px)" }}>
                 <div
                   style={{
                     fontFamily: serif,
