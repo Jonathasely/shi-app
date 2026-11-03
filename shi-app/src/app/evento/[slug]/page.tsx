@@ -187,7 +187,7 @@ const SCREENSAVER_TIMEOUT = 60;
 
 /* ─── CSS animations (injected once) ──────────────────────── */
 const animCSS = `
-html,body{background:${C.bg}}
+html,body{background:${C.bg};min-height:100vh;min-height:100dvh;overflow-x:hidden}
 @keyframes shi-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @keyframes shi-spinR{from{transform:rotate(360deg)}to{transform:rotate(0)}}
 @keyframes shi-fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -605,7 +605,7 @@ export default function EventoPage() {
 
   const analyze = useCallback(async () => {
     const selected = slots.filter(Boolean) as Perfume[];
-    if (selected.length !== 3 || bases.length === 0) return;
+    if (selected.length === 0 || bases.length === 0) return;
 
     const eventBaseIds = event?.selected_bases || [];
 
@@ -661,7 +661,7 @@ export default function EventoPage() {
     width: "100%",
     maxWidth: "var(--shi-frame-mw)",
     margin: "0 auto",
-    minHeight: "100vh",
+    minHeight: "100dvh",
     background: C.bg,
     display: "flex",
     flexDirection: "column",
@@ -947,7 +947,7 @@ export default function EventoPage() {
                   Quais seus perfumes preferidos?
                 </div>
                 <div style={{ fontSize: "var(--shi-checkbox)", color: C.g2, marginTop: 8, fontWeight: 300, lineHeight: 1.5 }}>
-                  Selecione exatamente 3 fragrâncias que você ama
+                  Selecione de 1 a 3 fragrâncias que você ama
                 </div>
               </div>
 
@@ -1282,15 +1282,14 @@ export default function EventoPage() {
                 <div style={{ marginTop: "clamp(12px, 2vh, 24px)" }}>
                   <button
                     onClick={analyze}
-                    style={{ ...btnP, opacity: filledCount === 3 ? 1 : 0.4 }}
-                    disabled={filledCount !== 3}
+                    style={btnP}
                   >
                     Descobrir meu perfil olfativo
                   </button>
                   {filledCount < 3 && (
                     <div style={{ textAlign: "center", fontSize: "var(--shi-hint)", color: C.g3, marginTop: 6 }}>
                       {filledCount === 1
-                        ? "Adicione mais para maior precisão"
+                        ? "Você pode adicionar mais para maior precisão"
                         : "Mais um para precisão máxima!"}
                     </div>
                   )}
@@ -1718,7 +1717,7 @@ export default function EventoPage() {
                         "Seu perfil olfativo",
                         `${mainBase?.name} | ${formatBaseCode(mainBase?.code || "")}`,
                         "",
-                        "Fragrâncias que você escolheu",
+                        slots.filter(Boolean).length === 1 ? "Fragrância que você escolheu" : "Fragrâncias que você escolheu",
                         chosenPerfumes,
                         "",
                         "Guarde este passaporte para consultar suas escolhas e continuar explorando o universo das fragrâncias com a SHI.",
