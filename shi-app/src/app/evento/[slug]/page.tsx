@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { perfumes as DB } from "@/data/perfumes";
 import { findBestBase, findTopBases, generatePassportCode } from "@/lib/algorithm";
 import type { Perfume, Base, ProfileResult } from "@/lib/algorithm";
-import html2canvas from "html2canvas";
+// html2canvas loaded dynamically in download handler
 
 /* ─── Fragella API types ─── */
 interface PerfumeWithImage extends Perfume {
@@ -1787,6 +1787,7 @@ export default function EventoPage() {
                     onClick={async () => {
                       if (!passportRef.current) return;
                       try {
+                        const html2canvas = (await import("html2canvas")).default;
                         const canvas = await html2canvas(passportRef.current, {
                           backgroundColor: C.bg,
                           scale: 2,
