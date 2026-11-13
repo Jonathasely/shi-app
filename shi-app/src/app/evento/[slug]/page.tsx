@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase";
 import { perfumes as DB } from "@/data/perfumes";
 import { findBestBase, findTopBases, generatePassportCode } from "@/lib/algorithm";
 import type { Perfume, Base, ProfileResult } from "@/lib/algorithm";
-// html2canvas loaded dynamically in download handler
 
 /* ─── Fragella API types ─── */
 interface PerfumeWithImage extends Perfume {
@@ -1787,8 +1786,19 @@ export default function EventoPage() {
                     onClick={async () => {
                       if (!passportRef.current) return;
                       try {
-                        const html2canvas = (await import("html2canvas")).default;
-                        const canvas = await html2canvas(passportRef.current, {
+                        // Load html2canvas from CDN dynamically
+                        const h2c = await new Promise<(el: HTMLElement, opts: Record<string, unknown>) => Promise<HTMLCanvasElement>>((resolve, reject) => {
+                          if ((window as unknown as Record<string, unknown>).html2canvas) {
+                            resolve((window as unknown as Record<string, unknown>).html2canvas as (el: HTMLElement, opts: Record<string, unknown>) => Promise<HTMLCanvasElement>);
+                            return;
+                          }
+                          const s = document.createElement("script");
+                          s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+                          s.onload = () => resolve((window as unknown as Record<string, unknown>).html2canvas as (el: HTMLElement, opts: Record<string, unknown>) => Promise<HTMLCanvasElement>);
+                          s.onerror = reject;
+                          document.head.appendChild(s);
+                        });
+                        const canvas = await h2c(passportRef.current, {
                           backgroundColor: C.bg,
                           scale: 2,
                           useCORS: true,
