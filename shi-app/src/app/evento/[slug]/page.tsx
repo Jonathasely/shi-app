@@ -1611,74 +1611,94 @@ export default function EventoPage() {
                   ref={passportRef}
                   style={{
                     border: `1px solid ${C.g4}`,
-                    padding: "32px 18px 24px",
+                    padding: "40px 24px 32px",
                     position: "relative",
                     background: C.bg,
+                    aspectRatio: "3/4.5",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    maxWidth: 360,
+                    margin: "0 auto",
                   }}
                 >
                   <Corners />
 
-                  <div
-                    style={{
-                      fontSize: "var(--shi-passport-label)",
-                      letterSpacing: 4,
-                      color: C.g3,
-                      textTransform: "uppercase",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Passaporte Olfativo
+                  {/* Top section */}
+                  <div style={{ textAlign: "center" }}>
+                    <div
+                      style={{
+                        fontSize: "var(--shi-passport-label)",
+                        letterSpacing: 4,
+                        color: C.g3,
+                        textTransform: "uppercase",
+                        marginBottom: 8,
+                      }}
+                    >
+                      Passaporte Olfativo
+                    </div>
+                    <Logo size="md" />
                   </div>
-                  <Logo size="md" />
-                  <div style={{ width: 30, height: 0.5, background: C.g4, margin: "16px auto" }} />
-                  <div
-                    style={{
-                      fontSize: "var(--shi-passport-name)",
-                      letterSpacing: 2,
-                      color: C.g2,
-                      textTransform: "uppercase",
-                      marginBottom: 12,
-                    }}
-                  >
-                    {formName} {formSurname}
+
+                  {/* Divider */}
+                  <div style={{ width: 40, height: 0.5, background: C.g4 }} />
+
+                  {/* Name + Base */}
+                  <div style={{ textAlign: "center" }}>
+                    <div
+                      style={{
+                        fontSize: "var(--shi-passport-name)",
+                        letterSpacing: 2,
+                        color: C.g2,
+                        textTransform: "uppercase",
+                        marginBottom: 14,
+                      }}
+                    >
+                      {formName} {formSurname}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: serif,
+                        fontSize: "var(--shi-passport-base)",
+                        color: C.dark,
+                        fontWeight: 400,
+                        letterSpacing: 1,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {results[0].base.name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: C.g2,
+                        letterSpacing: 0.5,
+                        fontWeight: 300,
+                        lineHeight: 1.5,
+                        maxWidth: 280,
+                        margin: "0 auto",
+                      }}
+                    >
+                      {results[0].base.description}
+                    </div>
                   </div>
+
+                  {/* Fragrance code box */}
                   <div
                     style={{
-                      fontFamily: serif,
-                      fontSize: "var(--shi-passport-base)",
-                      color: C.dark,
-                      fontWeight: 400,
-                      letterSpacing: 1,
-                      marginBottom: 4,
-                    }}
-                  >
-                    {results[0].base.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "var(--shi-result-desc)",
-                      color: C.g2,
-                      letterSpacing: 1,
-                      fontWeight: 300,
-                      marginBottom: 20,
-                    }}
-                  >
-                    {results[0].base.description}
-                  </div>
-                  <div
-                    style={{
-                      display: "inline-block",
                       border: `1px solid ${C.border}`,
-                      padding: "12px 24px",
+                      padding: "10px 28px",
+                      textAlign: "center",
                     }}
                   >
                     <div
                       style={{
-                        fontSize: "var(--shi-passport-label)",
+                        fontSize: 8,
                         letterSpacing: 3,
                         color: C.g3,
                         textTransform: "uppercase",
-                        marginBottom: 4,
+                        marginBottom: 3,
                       }}
                     >
                       Sua fragrância
@@ -1696,15 +1716,52 @@ export default function EventoPage() {
                     </div>
                   </div>
 
-                  {/* Selected perfume names with dots */}
-                  <div style={{ marginTop: 16, fontSize: "var(--shi-passport-ref)", color: C.g1, fontWeight: 300 }}>
-                    {slots
-                      .filter(Boolean)
-                      .map((p) => p!.name)
-                      .join(" • ")}
-                  </div>
+                  {/* Notes section */}
+                  {(() => {
+                    const selected = slots.filter(Boolean) as Perfume[];
+                    const allTop = [...new Set(selected.flatMap((p) => p.notes?.top || []))].slice(0, 4);
+                    const allMid = [...new Set(selected.flatMap((p) => p.notes?.mid || []))].slice(0, 4);
+                    const allBase = [...new Set(selected.flatMap((p) => p.notes?.base || []))].slice(0, 4);
+                    if (!allTop.length && !allMid.length && !allBase.length) return null;
+                    const noteStyle = { fontSize: 9, color: C.g2, fontWeight: 300 as const, lineHeight: 1.6, letterSpacing: 0.3 };
+                    const labelStyle = { fontSize: 8, color: C.g3, textTransform: "uppercase" as const, letterSpacing: 2, marginBottom: 2 };
+                    return (
+                      <div style={{ textAlign: "center", width: "100%" }}>
+                        <div style={{ width: 20, height: 0.5, background: C.g4, margin: "0 auto 10px" }} />
+                        <div style={{ display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
+                          {allTop.length > 0 && (
+                            <div>
+                              <div style={labelStyle}>Topo</div>
+                              <div style={noteStyle}>{allTop.join(", ")}</div>
+                            </div>
+                          )}
+                          {allMid.length > 0 && (
+                            <div>
+                              <div style={labelStyle}>Coração</div>
+                              <div style={noteStyle}>{allMid.join(", ")}</div>
+                            </div>
+                          )}
+                          {allBase.length > 0 && (
+                            <div>
+                              <div style={labelStyle}>Base</div>
+                              <div style={noteStyle}>{allBase.join(", ")}</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
-                  <div style={{ marginTop: 16, fontSize: "var(--shi-passport-event)", color: C.g4 }}>{event.name}</div>
+                  {/* Bottom: perfumes + event */}
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: C.g1, fontWeight: 300, letterSpacing: 0.5 }}>
+                      {slots
+                        .filter(Boolean)
+                        .map((p) => p!.name)
+                        .join(" · ")}
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 9, color: C.g4, letterSpacing: 1 }}>{event.name}</div>
+                  </div>
                 </div>
 
                 {/* Buttons */}
