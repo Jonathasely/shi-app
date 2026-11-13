@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { perfumes as DB } from "@/data/perfumes";
 import { findBestBase, findTopBases, generatePassportCode } from "@/lib/algorithm";
 import type { Perfume, Base, ProfileResult } from "@/lib/algorithm";
+import html2canvas from "html2canvas";
 
 /* ─── Fragella API types ─── */
 interface PerfumeWithImage extends Perfume {
@@ -334,6 +335,7 @@ html,body{background:${C.bg};min-height:100vh;min-height:100dvh;overflow-x:hidde
     --shi-error-fs:18px;
     --shi-pass-mw:500px;
   }
+  .shi-hide-totem{display:none!important}
 }
 
 /* ── Screensaver ── */
@@ -373,6 +375,7 @@ export default function EventoPage() {
   const [apiResults, setApiResults] = useState<PerfumeWithImage[]>([]);
   const [apiLoading, setApiLoading] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const passportRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Analyzing
@@ -1565,14 +1568,19 @@ export default function EventoPage() {
                   </div>
                 </div>
 
-                {/* CTA Button */}
+                {/* CTA Buttons */}
                 <div style={{ marginTop: "auto" }}>
                   <button onClick={() => go("passport")} style={{ ...btnP, fontSize: "var(--shi-cta-fs)", letterSpacing: 1.5, padding: "14px 12px", lineHeight: 1.4 }}>
                     Clique aqui para ganhar o passaporte olfativo SHI Aroma Lab
                   </button>
-                  <button onClick={reset} style={{ ...btnS, marginTop: 8 }}>
-                    Início
-                  </button>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button onClick={() => go("search")} style={{ ...btnS, flex: 1 }}>
+                      Alterar seleção
+                    </button>
+                    <button onClick={reset} style={{ ...btnS, flex: 1 }}>
+                      Início
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1601,10 +1609,12 @@ export default function EventoPage() {
                 }}
               >
                 <div
+                  ref={passportRef}
                   style={{
                     border: `1px solid ${C.g4}`,
                     padding: "32px 18px 24px",
                     position: "relative",
+                    background: C.bg,
                   }}
                 >
                   <Corners />
@@ -1701,9 +1711,21 @@ export default function EventoPage() {
                 {/* Buttons */}
                 <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
                   <button
+                    className="shi-hide-totem"
                     onClick={async () => {
                       const mainBase = results[0]?.base;
-                      const chosenPerfumes = slots.filter(Boolean).map((p) => `• ${p!.name}`).join("\n");
+                      const selected = slots.filter(Boolean) as Perfume[];
+                      const chosenPerfumes = selected.map((p) => `• ${p.name}`).join("\n");
+
+                      // Build notes section from selected perfumes
+                      const allTop = [...new Set(selected.flatMap((p) => p.notes?.top || []))];
+                      const allMid = [...new Set(selected.flatMap((p) => p.notes?.mid || []))];
+                      const allBase = [...new Set(selected.flatMap((p) => p.notes?.base || []))];
+                      const notesLines: string[] = [];
+                      if (allTop.length) notesLines.push(`Notas de topo: ${allTop.slice(0, 5).join(", ")}`);
+                      if (allMid.length) notesLines.push(`Notas de coração: ${allMid.slice(0, 5).join(", ")}`);
+                      if (allBase.length) notesLines.push(`Notas de base: ${allBase.slice(0, 5).join(", ")}`);
+
                       const text = [
                         "PASSAPORTE OLFATIVO",
                         "SHI AROMA LAB",
@@ -1717,9 +1739,10 @@ export default function EventoPage() {
                         "Seu perfil olfativo",
                         `${mainBase?.name} | ${formatBaseCode(mainBase?.code || "")}`,
                         "",
-                        slots.filter(Boolean).length === 1 ? "Fragrância que você escolheu" : "Fragrâncias que você escolheu",
+                        selected.length === 1 ? "Fragrância que você escolheu" : "Fragrâncias que você escolheu",
                         chosenPerfumes,
                         "",
+                        ...(notesLines.length ? [...notesLines, ""] : []),
                         "Guarde este passaporte para consultar suas escolhas e continuar explorando o universo das fragrâncias com a SHI.",
                         "",
                         "Singular. Hedônico. Inesquecível.",
@@ -1759,6 +1782,28 @@ export default function EventoPage() {
                     style={{ ...btnS, flex: 1, fontSize: "var(--shi-hint)", letterSpacing: 1.5 }}
                   >
                     {shareMsg || "Compartilhar"}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!passportRef.current) return;
+                      try {
+                        const canvas = await html2canvas(passportRef.current, {
+                          backgroundColor: C.bg,
+                          scale: 2,
+                          useCORS: true,
+                        });
+                        const link = document.createElement("a");
+                        link.download = `passaporte-shi-${formName || "olfativo"}.png`;
+                        link.href = canvas.toDataURL("image/png");
+                        link.click();
+                      } catch {
+                        // Fallback if html2canvas fails
+                        alert("Não foi possível baixar a imagem. Tire um print da tela.");
+                      }
+                    }}
+                    style={{ ...btnS, flex: 1, fontSize: "var(--shi-hint)", letterSpacing: 1.5 }}
+                  >
+                    Baixar
                   </button>
                   <button onClick={reset} style={{ ...btnS, flex: 1, fontSize: "var(--shi-hint)", letterSpacing: 1.5 }}>
                     Início
