@@ -1096,24 +1096,43 @@ export default function EventoPage() {
               {/* Search panel (when slot active) */}
               {activeSlot >= 0 && (
                 <div style={{ animation: "shi-fadeUp .25s ease", flex: 1 }}>
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck={false}
-                    enterKeyHint="search"
-                    placeholder="Buscar perfume ou marca..."
-                    value={searchVal}
-                    onChange={(e) => setSearchVal(e.target.value)}
-                    style={{
-                      ...inp,
-                      borderBottom: `1.5px solid ${C.dark}`,
-                      fontSize: "var(--shi-search-input)",
-                      padding: "var(--shi-input-pad) 0",
-                    }}
-                  />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
+                      enterKeyHint="search"
+                      placeholder="Buscar perfume ou marca..."
+                      value={searchVal}
+                      onChange={(e) => setSearchVal(e.target.value)}
+                      style={{
+                        ...inp,
+                        borderBottom: `1.5px solid ${C.dark}`,
+                        fontSize: "var(--shi-search-input)",
+                        padding: "var(--shi-input-pad) 0",
+                        flex: 1,
+                      }}
+                    />
+                    <button
+                      onClick={() => { setActiveSlot(-1); setSearchVal(""); }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: "var(--shi-search-input)",
+                        color: C.g2,
+                        fontFamily: "inherit",
+                        padding: "8px 4px",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                   {searchVal.length >= 3 && apiLoading && (
                     <div style={{ textAlign: "center", padding: 16, color: C.g3, fontSize: "var(--shi-search-msg)" }}>
                       Buscando perfumes...
