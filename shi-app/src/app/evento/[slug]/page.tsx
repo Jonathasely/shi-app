@@ -484,9 +484,7 @@ export default function EventoPage() {
   }, [screen, go]);
 
   /* ── Fragella API debounced search ─────────────────── */
-  // Flag: ativar fallback para DB local caso API não esteja disponível
-  const USE_LOCAL_FALLBACK = false;
-
+  // Busca na API Fragella como fonte complementar (pode estar com cota excedida)
   useEffect(() => {
     if (searchVal.length < 3) {
       setApiResults([]);
@@ -516,7 +514,7 @@ export default function EventoPage() {
           setApiResults([]);
         }
       } catch {
-        // Fallback silently to local DB
+        // API indisponível ou cota excedida — sem problema, DB local cobre
         setApiResults([]);
       }
       setApiLoading(false);
@@ -527,27 +525,37 @@ export default function EventoPage() {
   /* ── derived ─────────────────────────────────────────── */
   const filledCount = slots.filter(Boolean).length;
 
-  // Busca exclusiva via API. DB local só se USE_LOCAL_FALLBACK = true
+  // Busca híbrida: DB local (150 perfumes) + API Fragella (complementar)
+  // DB local é a fonte principal — sempre disponível
+  // API Fragella complementa com perfumes extras quando disponível
   const filtered = (() => {
     if (searchVal.length < 3) return [];
     const selected = slots.filter(Boolean).map((s) => s!.id);
+    const q = searchVal.toLowerCase();
 
-    // Resultados da API Fragella
-    if (apiResults.length > 0) {
-      return apiResults.filter((p) => !selected.includes(p.id)).slice(0, 8);
+    // 1. Busca local — sempre ativa
+    const localResults: PerfumeWithImage[] = DB.filter(
+      (p) =>
+        (p.name.toLowerCase().includes(q) ||
+          p.brand.toLowerCase().includes(q)) &&
+        !selected.includes(p.id)
+    ).map((p) => ({ ...p, image: "" }));
+
+    // 2. Resultados da API Fragella (complementares)
+    const apiFiltered = apiResults.filter((p) => !selected.includes(p.id));
+
+    // 3. Merge: local primeiro, depois API (sem duplicatas por nome+marca)
+    const seen = new Set(localResults.map((p) => `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`));
+    const merged = [...localResults];
+    for (const ap of apiFiltered) {
+      const key = `${ap.name.toLowerCase()}|${ap.brand.toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(ap);
+      }
     }
 
-    // Fallback para DB local (desativado por padrão)
-    if (USE_LOCAL_FALLBACK) {
-      return DB.filter(
-        (p) =>
-          (p.name.toLowerCase().includes(searchVal.toLowerCase()) ||
-            p.brand.toLowerCase().includes(searchVal.toLowerCase())) &&
-          !selected.includes(p.id)
-      ).slice(0, 6);
-    }
-
-    return [];
+    return merged.slice(0, 10);
   })();
 
   /* ── handlers ────────────────────────────────────────── */
