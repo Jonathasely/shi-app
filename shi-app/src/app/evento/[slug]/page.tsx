@@ -586,21 +586,21 @@ export default function EventoPage() {
     // 3. Resultados da API Fragella (backup adicional)
     const apiFiltered = apiResults.filter((p) => !selected.includes(p.id));
 
-    // 4. Merge: local primeiro, depois ScentRev, depois Fragella (sem duplicatas)
+    // 4. Merge: local primeiro, depois Fragella (tem imagens), depois ScentRev (sem duplicatas)
     const seen = new Set(localResults.map((p) => `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`));
     const merged = [...localResults];
-    for (const sp of scentFiltered) {
-      const key = `${sp.name.toLowerCase()}|${sp.brand.toLowerCase()}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        merged.push(sp);
-      }
-    }
     for (const ap of apiFiltered) {
       const key = `${ap.name.toLowerCase()}|${ap.brand.toLowerCase()}`;
       if (!seen.has(key)) {
         seen.add(key);
         merged.push(ap);
+      }
+    }
+    for (const sp of scentFiltered) {
+      const key = `${sp.name.toLowerCase()}|${sp.brand.toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(sp);
       }
     }
 
