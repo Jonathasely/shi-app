@@ -261,29 +261,33 @@ export async function GET(req: NextRequest) {
     // 2. Enriquecer top 5 com acordes e notas (em paralelo)
     const enriched = await Promise.all(
       top5.map(async (item: any) => {
-        const slug = item.slug || item.id || item.name || "";
+        // Usar fragrance_slug retornado pelo search (ex: "mugler-alien-liqueur-de-parfum")
+        const fragranceSlug = item.fragrance_slug || item.slug || "";
+        // Extrair marca do slug (primeira parte antes do primeiro "-" do nome)
+        const slugBrand = fragranceSlug.split("-")[0] || "";
+        const brandFromSlug = slugBrand.charAt(0).toUpperCase() + slugBrand.slice(1);
         const basePerfume = {
-          id: slug,
+          id: item.public_id || fragranceSlug || item.name || "",
           name: item.name || item.fragrance || "",
-          brand: item.brand || item.house || "",
+          brand: item.brand || item.house || brandFromSlug,
           image: item.image || item.imageUrl || item.image_url || "",
           accords: [] as { name: string; value: number }[],
           notes: { top: [] as string[], heart: [] as string[], base: [] as string[] },
         };
 
-        if (!slug) return basePerfume;
+        if (!fragranceSlug) return basePerfume;
 
         // Tentar buscar perfil completo (acordes, notas, etc.)
         try {
           const [profileRes, accordsRes, notesRes] = await Promise.allSettled([
-            callMcpTool("get_fragrance_profile", { slug }, controller.signal),
-            callMcpTool("get_accords", { slug }, controller.signal),
-            callMcpTool("get_note_pyramid", { slug }, controller.signal),
+            callMcpTool("get_fragrance_profile", { fragrance_slug: fragranceSlug }, controller.signal),
+            callMcpTool("get_accords", { fragrance_slug: fragranceSlug }, controller.signal),
+            callMcpTool("get_note_pyramid", { fragrance_slug: fragranceSlug }, controller.signal),
           ]);
 
           if (debug) {
             debugLog.push({
-              step: "enrich_" + slug.slice(0, 30),
+              step: "enrich_" + fragranceSlug.slice(0, 40),
               profile: profileRes.status === "fulfilled" ? profileRes.value : profileRes.status === "rejected" ? String((profileRes as any).reason) : null,
               accords: accordsRes.status === "fulfilled" ? accordsRes.value : accordsRes.status === "rejected" ? String((accordsRes as any).reason) : null,
               notes: notesRes.status === "fulfilled" ? notesRes.value : notesRes.status === "rejected" ? String((notesRes as any).reason) : null,
