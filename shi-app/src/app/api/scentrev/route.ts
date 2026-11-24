@@ -25,8 +25,12 @@ const ACCORD_PT: Record<string, string> = {
   lavender: "Lavanda", marine: "Marinho", aldehydic: "Aldeídico", tobacco: "Tabaco",
   cinnamon: "Canela", coconut: "Coco", honey: "Mel", iris: "Íris",
   jasmine: "Jasmim", soft: "Suave", metallic: "Metálico", resinous: "Resinoso",
-  salty: "Salgado", "warm spicy": "Especiado Quente", "fresh spicy": "Especiado Fresco",
-  "white floral": "Floral Branco",
+  salty: "Salgado", "warm spicy": "Especiado Quente", "warm-spicy": "Especiado Quente",
+  "fresh spicy": "Especiado Fresco", "fresh-spicy": "Especiado Fresco",
+  "white floral": "Floral Branco", "yellow floral": "Floral Amarelo",
+  "yellow-floral": "Floral Amarelo", almond: "Amêndoa",
+  "powdery floral": "Floral Empolvado", "sweet floral": "Floral Doce",
+  caramel: "Caramelo", coffee: "Café", chocolate: "Chocolate",
 };
 
 const NOTE_PT: Record<string, string> = {
@@ -294,12 +298,13 @@ export async function GET(req: NextRequest) {
             });
           }
 
-          // Extrair brand do perfil
+          // Extrair brand do perfil (estrutura: { identity: { brand_name, ... } })
           if (profileRes.status === "fulfilled" && profileRes.value) {
             const profile = extractSingleResult(profileRes.value);
             if (profile && !profile.error) {
-              basePerfume.brand = profile.brand || profile.house || basePerfume.brand;
-              basePerfume.image = profile.image || profile.imageUrl || basePerfume.image;
+              const identity = profile.identity || profile;
+              basePerfume.brand = identity.brand_name || identity.brand || profile.brand || profile.house || basePerfume.brand;
+              basePerfume.image = identity.image || profile.image || profile.imageUrl || basePerfume.image;
             }
           }
 
