@@ -226,6 +226,7 @@ function mapNotes(data: any): { top: string[]; heart: string[]; base: string[] }
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";
+  const debug = searchParams.get("debug") === "1";
 
   if (!search.trim()) {
     return NextResponse.json({ data: [] });
@@ -234,6 +235,9 @@ export async function GET(req: NextRequest) {
   if (!API_KEY) {
     return NextResponse.json({ data: [], error: "ScentRev API key not configured" });
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const debugLog: any[] = [];
 
   try {
     // Timeout de 6s total para busca + enriquecimento
@@ -247,7 +251,11 @@ export async function GET(req: NextRequest) {
       controller.signal
     );
 
+    if (debug) debugLog.push({ step: "search_raw", result });
+
     const items = extractPerfumes(result);
+    if (debug) debugLog.push({ step: "search_extracted", count: items.length, first: items[0] });
+
     const top5 = items.slice(0, 5);
 
     // 2. Enriquecer top 5 com acordes e notas (em paralelo)
@@ -273,10 +281,19 @@ export async function GET(req: NextRequest) {
             callMcpTool("get_note_pyramid", { slug }, controller.signal),
           ]);
 
+          if (debug) {
+            debugLog.push({
+              step: "enrich_" + slug.slice(0, 30),
+              profile: profileRes.status === "fulfilled" ? profileRes.value : profileRes.status === "rejected" ? String((profileRes as any).reason) : null,
+              accords: accordsRes.status === "fulfilled" ? accordsRes.value : accordsRes.status === "rejected" ? String((accordsRes as any).reason) : null,
+              notes: notesRes.status === "fulfilled" ? notesRes.value : notesRes.status === "rejected" ? String((notesRes as any).reason) : null,
+            });
+          }
+
           // Extrair brand do perfil
           if (profileRes.status === "fulfilled" && profileRes.value) {
             const profile = extractSingleResult(profileRes.value);
-            if (profile) {
+            if (profile && !profile.error) {
               basePerfume.brand = profile.brand || profile.house || basePerfume.brand;
               basePerfume.image = profile.image || profile.imageUrl || basePerfume.image;
             }
@@ -285,7 +302,7 @@ export async function GET(req: NextRequest) {
           // Extrair acordes
           if (accordsRes.status === "fulfilled" && accordsRes.value) {
             const accData = extractSingleResult(accordsRes.value);
-            if (accData) {
+            if (accData && !accData.error) {
               basePerfume.accords = mapAccords(accData);
             }
           }
@@ -293,7 +310,7 @@ export async function GET(req: NextRequest) {
           // Extrair notas
           if (notesRes.status === "fulfilled" && notesRes.value) {
             const notesData = extractSingleResult(notesRes.value);
-            if (notesData) {
+            if (notesData && !notesData.error) {
               basePerfume.notes = mapNotes(notesData);
             }
           }
@@ -306,6 +323,10 @@ export async function GET(req: NextRequest) {
     );
 
     clearTimeout(timeout);
+
+    if (debug) {
+      return NextResponse.json({ data: enriched, _debug: debugLog });
+    }
     return NextResponse.json({ data: enriched });
   } catch (err: any) {
     // Falha silenciosa — log para debug, retorna vazio
