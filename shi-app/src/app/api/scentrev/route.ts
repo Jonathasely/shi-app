@@ -157,6 +157,72 @@ function extractPerfumes(result: any): any[] {
   return [];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractSingleResult(result: any): any {
+  if (!result) return null;
+  // MCP format: { content: [{ type: "text", text: "..." }] }
+  if (result.content && Array.isArray(result.content)) {
+    for (const block of result.content) {
+      if (block.type === "text" && block.text) {
+        try { return JSON.parse(block.text); } catch { return null; }
+      }
+    }
+  }
+  return result;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapAccords(data: any): { name: string; value: number }[] {
+  // Pode vir como array ou objeto
+  let items: any[] = [];
+  if (Array.isArray(data)) items = data;
+  else if (data.accords && Array.isArray(data.accords)) items = data.accords;
+  else if (typeof data === "object" && !Array.isArray(data)) {
+    // Pode ser { floral: 0.8, woody: 0.5 }
+    return Object.entries(data)
+      .filter(([k]) => k !== "slug" && k !== "name" && k !== "id")
+      .map(([name, val]: [string, any]) => ({
+        name: translateAccord(name),
+        value: typeof val === "number" ? (val <= 1 ? Math.round(val * 100) : Math.round(val)) : 50,
+      }))
+      .filter((a) => a.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }
+
+  return items
+    .map((a: any) => ({
+      name: translateAccord(a.name || a.accord || ""),
+      value: typeof a.value === "number"
+        ? (a.value <= 1 ? Math.round(a.value * 100) : Math.round(a.value))
+        : typeof a.percentage === "number"
+          ? Math.round(a.percentage)
+          : typeof a.strength === "number"
+            ? (a.strength <= 1 ? Math.round(a.strength * 100) : Math.round(a.strength))
+            : 50,
+    }))
+    .filter((a) => a.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapNotes(data: any): { top: string[]; heart: string[]; base: string[] } {
+  const notes = data.notes || data.note_pyramid || data;
+  const convert = (arr: any): string[] => {
+    if (!arr) return [];
+    if (Array.isArray(arr)) {
+      return arr.map((n: any) => translateNote(typeof n === "string" ? n : n.name || ""));
+    }
+    return [];
+  };
+  return {
+    top: convert(notes.top),
+    heart: convert(notes.heart || notes.mid || notes.middle),
+    base: convert(notes.base || notes.bottom),
+  };
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";
@@ -170,72 +236,77 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Timeout de 4s para não travar a busca
+    // Timeout de 6s total para busca + enriquecimento
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 6000);
 
+    // 1. Buscar fragrâncias pelo nome
     const result = await callMcpTool(
       "search_fragrances",
       { query: search },
       controller.signal
     );
 
-    clearTimeout(timeout);
-
     const items = extractPerfumes(result);
+    const top5 = items.slice(0, 5);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const perfumes = items.slice(0, 10).map((item: any) => {
-      // Mapear acordes — ScentRev retorna 0-100 (ou 0-1 que convertemos)
-      let accords: { name: string; value: number }[] = [];
-      if (item.accords) {
-        if (Array.isArray(item.accords)) {
-          accords = item.accords.map((a: any) => ({
-            name: translateAccord(a.name || a.accord || ""),
-            // Se valor entre 0-1, multiplicar por 100
-            value: typeof a.value === "number"
-              ? (a.value <= 1 ? Math.round(a.value * 100) : Math.round(a.value))
-              : typeof a.percentage === "number"
-                ? Math.round(a.percentage)
-                : typeof a.strength === "number"
-                  ? (a.strength <= 1 ? Math.round(a.strength * 100) : Math.round(a.strength))
-                  : 50,
-          }));
-        } else if (typeof item.accords === "object") {
-          accords = Object.entries(item.accords).map(([name, val]: [string, any]) => ({
-            name: translateAccord(name),
-            value: typeof val === "number"
-              ? (val <= 1 ? Math.round(val * 100) : Math.round(val))
-              : 50,
-          }));
+    // 2. Enriquecer top 5 com acordes e notas (em paralelo)
+    const enriched = await Promise.all(
+      top5.map(async (item: any) => {
+        const slug = item.slug || item.id || item.name || "";
+        const basePerfume = {
+          id: slug,
+          name: item.name || item.fragrance || "",
+          brand: item.brand || item.house || "",
+          image: item.image || item.imageUrl || item.image_url || "",
+          accords: [] as { name: string; value: number }[],
+          notes: { top: [] as string[], heart: [] as string[], base: [] as string[] },
+        };
+
+        if (!slug) return basePerfume;
+
+        // Tentar buscar perfil completo (acordes, notas, etc.)
+        try {
+          const [profileRes, accordsRes, notesRes] = await Promise.allSettled([
+            callMcpTool("get_fragrance_profile", { slug }, controller.signal),
+            callMcpTool("get_accords", { slug }, controller.signal),
+            callMcpTool("get_note_pyramid", { slug }, controller.signal),
+          ]);
+
+          // Extrair brand do perfil
+          if (profileRes.status === "fulfilled" && profileRes.value) {
+            const profile = extractSingleResult(profileRes.value);
+            if (profile) {
+              basePerfume.brand = profile.brand || profile.house || basePerfume.brand;
+              basePerfume.image = profile.image || profile.imageUrl || basePerfume.image;
+            }
+          }
+
+          // Extrair acordes
+          if (accordsRes.status === "fulfilled" && accordsRes.value) {
+            const accData = extractSingleResult(accordsRes.value);
+            if (accData) {
+              basePerfume.accords = mapAccords(accData);
+            }
+          }
+
+          // Extrair notas
+          if (notesRes.status === "fulfilled" && notesRes.value) {
+            const notesData = extractSingleResult(notesRes.value);
+            if (notesData) {
+              basePerfume.notes = mapNotes(notesData);
+            }
+          }
+        } catch {
+          // Se enriquecimento falhar, retorna dados básicos mesmo
         }
-      }
 
-      // Mapear notas
-      const notes = item.notes || item.note_pyramid || {};
-      const mapNotes = (arr: any): string[] => {
-        if (!arr) return [];
-        if (Array.isArray(arr)) {
-          return arr.map((n: any) => translateNote(typeof n === "string" ? n : n.name || ""));
-        }
-        return [];
-      };
+        return basePerfume;
+      })
+    );
 
-      return {
-        id: item.slug || item.id || item.name || "",
-        name: item.name || item.fragrance || "",
-        brand: item.brand || item.house || "",
-        image: item.image || item.imageUrl || item.image_url || "",
-        accords,
-        notes: {
-          top: mapNotes(notes.top),
-          heart: mapNotes(notes.heart || notes.mid || notes.middle),
-          base: mapNotes(notes.base || notes.bottom),
-        },
-      };
-    });
-
-    return NextResponse.json({ data: perfumes });
+    clearTimeout(timeout);
+    return NextResponse.json({ data: enriched });
   } catch (err: any) {
     // Falha silenciosa — log para debug, retorna vazio
     console.error("ScentRev proxy error:", err?.message || err);
