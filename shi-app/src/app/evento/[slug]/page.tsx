@@ -547,15 +547,33 @@ export default function EventoPage() {
         !selected.includes(p.id)
     ).map((p) => ({ ...p, image: "" }));
 
-    // 3. Merge: Fragella primeiro (tem fotos), depois local (sem duplicatas)
-    const seen = new Set(apiFiltered.map((p) => `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`));
-    const merged = [...apiFiltered];
-    for (const lp of localResults) {
-      const key = `${lp.name.toLowerCase()}|${lp.brand.toLowerCase()}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        merged.push(lp);
-      }
+    // 3. Merge: match exato no topo, depois Fragella (fotos), depois local
+    const seen = new Set<string>();
+    const merged: PerfumeWithImage[] = [];
+
+    // Primeiro: matches exatos de nome (qualquer fonte) — ex: "Angel" = "Angel"
+    const allResults = [...apiFiltered, ...localResults];
+    const exactMatches = allResults.filter((p) => p.name.toLowerCase() === q);
+    const partialApi = apiFiltered.filter((p) => p.name.toLowerCase() !== q);
+    const partialLocal = localResults.filter((p) => p.name.toLowerCase() !== q);
+
+    // Adicionar exatos primeiro (prioriza com imagem)
+    const sortedExact = exactMatches.sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0));
+    for (const p of sortedExact) {
+      const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
+      if (!seen.has(key)) { seen.add(key); merged.push(p); }
+    }
+
+    // Depois: Fragella (tem fotos)
+    for (const p of partialApi) {
+      const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
+      if (!seen.has(key)) { seen.add(key); merged.push(p); }
+    }
+
+    // Por último: banco local (sem duplicatas)
+    for (const p of partialLocal) {
+      const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
+      if (!seen.has(key)) { seen.add(key); merged.push(p); }
     }
 
     return merged.slice(0, 10);

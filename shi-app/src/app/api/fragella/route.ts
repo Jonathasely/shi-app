@@ -294,18 +294,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Fetch page 1 and page 2 in parallel to get up to 20 results
-    const baseUrl = `${API_BASE}/fragrances?search=${encodeURIComponent(search)}&limit=10`;
-    const [res1, res2] = await Promise.all([
-      fetch(`${baseUrl}&page=1`, {
-        headers: { "x-api-key": API_KEY },
-        next: { revalidate: 3600 },
-      }),
-      fetch(`${baseUrl}&page=2`, {
-        headers: { "x-api-key": API_KEY },
-        next: { revalidate: 3600 },
-      }),
-    ]);
+    // Uma única chamada com limit=20 (economiza créditos — antes eram 2 chamadas)
+    const url = `${API_BASE}/fragrances?search=${encodeURIComponent(search)}&limit=${limit}&page=1`;
+    const res1 = await fetch(url, {
+      headers: { "x-api-key": API_KEY },
+      next: { revalidate: 3600 },
+    });
 
     if (!res1.ok) {
       return NextResponse.json(
@@ -315,24 +309,7 @@ export async function GET(req: NextRequest) {
     }
 
     const data1 = await res1.json();
-    const items1 = Array.isArray(data1) ? data1 : data1.data || [];
-
-    let items2: any[] = [];
-    if (res2.ok) {
-      const data2 = await res2.json();
-      items2 = Array.isArray(data2) ? data2 : data2.data || [];
-    }
-
-    // Combine both pages, deduplicate by _id
-    const seen = new Set<string>();
-    const items: any[] = [];
-    for (const item of [...items1, ...items2]) {
-      const id = item._id || item.id || item.name || "";
-      if (!seen.has(id)) {
-        seen.add(id);
-        items.push(item);
-      }
-    }
+    const items: any[] = Array.isArray(data1) ? data1 : data1.data || [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const perfumes = items.map((item: any) => {
