@@ -372,7 +372,7 @@ export default function EventoPage() {
   const [activeSlot, setActiveSlot] = useState(-1);
   const [searchVal, setSearchVal] = useState("");
   const [apiResults, setApiResults] = useState<PerfumeWithImage[]>([]);
-  const [scentRevResults, setScentRevResults] = useState<PerfumeWithImage[]>([]);
+  // ScentRev removido — cliente optou por Fragella (tem imagens) + banco local
   const [apiLoading, setApiLoading] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const passportRef = useRef<HTMLDivElement>(null);
@@ -484,8 +484,8 @@ export default function EventoPage() {
     };
   }, [screen, go]);
 
-  /* ── Fragella API debounced search ─────────────────── */
-  // Busca na API Fragella como fonte complementar (pode estar com cota excedida)
+  /* ── Fragella API debounced search (principal) ──────── */
+  // Busca na API Fragella — fonte principal com imagens (cota: 20k buscas)
   useEffect(() => {
     if (searchVal.length < 3) {
       setApiResults([]);
@@ -519,60 +519,24 @@ export default function EventoPage() {
         setApiResults([]);
       }
       setApiLoading(false);
-    }, 350);
+    }, 800);
     return () => clearTimeout(timer);
   }, [searchVal]);
 
-  /* ── ScentRev API debounced search ──────────────────── */
-  // Busca na ScentRev como fonte complementar (126k+ fragrâncias)
-  useEffect(() => {
-    if (searchVal.length < 3) {
-      setScentRevResults([]);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/scentrev?search=${encodeURIComponent(searchVal)}`);
-        const json = await res.json();
-        if (json.data && json.data.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const mapped: PerfumeWithImage[] = json.data.map((item: any) => ({
-            id: item.id || item.name,
-            name: item.name,
-            brand: item.brand,
-            image: item.image || "",
-            accords: item.accords || [],
-            notes: {
-              top: (item.notes?.top || []).map((n: any) => typeof n === "string" ? n : n.name || n),
-              mid: (item.notes?.heart || item.notes?.mid || []).map((n: any) => typeof n === "string" ? n : n.name || n),
-              base: (item.notes?.base || []).map((n: any) => typeof n === "string" ? n : n.name || n),
-            },
-          }));
-          setScentRevResults(mapped);
-        } else {
-          setScentRevResults([]);
-        }
-      } catch {
-        // ScentRev indisponível — sem problema, DB local + Fragella cobrem
-        setScentRevResults([]);
-      }
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [searchVal]);
+  /* ── ScentRev removido — cliente optou por Fragella + banco local ── */
 
   /* ── derived ─────────────────────────────────────────── */
   const filledCount = slots.filter(Boolean).length;
 
-  // Busca híbrida: DB local (150) + ScentRev (126k+) + Fragella (backup)
-  // DB local é a fonte principal — sempre disponível, instantâneo
-  // ScentRev complementa com 126k+ fragrâncias
-  // Fragella mantida como backup adicional
+  // Busca híbrida: DB local (150) + Fragella (principal, com imagens)
+  // DB local — sempre disponível, instantâneo, custo zero
+  // Fragella — fonte principal com imagens dos frascos (cota: 20k buscas)
   const filtered = (() => {
     if (searchVal.length < 3) return [];
     const selected = slots.filter(Boolean).map((s) => s!.id);
     const q = searchVal.toLowerCase();
 
-    // 1. Busca local — sempre ativa
+    // 1. Busca local — sempre ativa, resposta instantânea
     const localResults: PerfumeWithImage[] = DB.filter(
       (p) =>
         (p.name.toLowerCase().includes(q) ||
@@ -580,13 +544,10 @@ export default function EventoPage() {
         !selected.includes(p.id)
     ).map((p) => ({ ...p, image: "" }));
 
-    // 2. Resultados da ScentRev (complementares, 126k+ fragrâncias)
-    const scentFiltered = scentRevResults.filter((p) => !selected.includes(p.id));
-
-    // 3. Resultados da API Fragella (backup adicional)
+    // 2. Resultados da API Fragella (principal, com imagens)
     const apiFiltered = apiResults.filter((p) => !selected.includes(p.id));
 
-    // 4. Merge: local primeiro, depois Fragella (tem imagens), depois ScentRev (sem duplicatas)
+    // 3. Merge: local primeiro, depois Fragella (sem duplicatas)
     const seen = new Set(localResults.map((p) => `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`));
     const merged = [...localResults];
     for (const ap of apiFiltered) {
@@ -594,13 +555,6 @@ export default function EventoPage() {
       if (!seen.has(key)) {
         seen.add(key);
         merged.push(ap);
-      }
-    }
-    for (const sp of scentFiltered) {
-      const key = `${sp.name.toLowerCase()}|${sp.brand.toLowerCase()}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        merged.push(sp);
       }
     }
 
