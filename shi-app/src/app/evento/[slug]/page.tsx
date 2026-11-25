@@ -528,15 +528,18 @@ export default function EventoPage() {
   /* ── derived ─────────────────────────────────────────── */
   const filledCount = slots.filter(Boolean).length;
 
-  // Busca híbrida: DB local (150) + Fragella (principal, com imagens)
-  // DB local — sempre disponível, instantâneo, custo zero
+  // Busca híbrida: Fragella (principal, com imagens) + DB local (backup)
   // Fragella — fonte principal com imagens dos frascos (cota: 20k buscas)
+  // DB local — complementa quando Fragella não tem, instantâneo, custo zero
   const filtered = (() => {
     if (searchVal.length < 3) return [];
     const selected = slots.filter(Boolean).map((s) => s!.id);
     const q = searchVal.toLowerCase();
 
-    // 1. Busca local — sempre ativa, resposta instantânea
+    // 1. Resultados da API Fragella (principal, com imagens)
+    const apiFiltered = apiResults.filter((p) => !selected.includes(p.id));
+
+    // 2. Busca local — complementa o que a Fragella não encontrou
     const localResults: PerfumeWithImage[] = DB.filter(
       (p) =>
         (p.name.toLowerCase().includes(q) ||
@@ -544,17 +547,14 @@ export default function EventoPage() {
         !selected.includes(p.id)
     ).map((p) => ({ ...p, image: "" }));
 
-    // 2. Resultados da API Fragella (principal, com imagens)
-    const apiFiltered = apiResults.filter((p) => !selected.includes(p.id));
-
-    // 3. Merge: local primeiro, depois Fragella (sem duplicatas)
-    const seen = new Set(localResults.map((p) => `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`));
-    const merged = [...localResults];
-    for (const ap of apiFiltered) {
-      const key = `${ap.name.toLowerCase()}|${ap.brand.toLowerCase()}`;
+    // 3. Merge: Fragella primeiro (tem fotos), depois local (sem duplicatas)
+    const seen = new Set(apiFiltered.map((p) => `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`));
+    const merged = [...apiFiltered];
+    for (const lp of localResults) {
+      const key = `${lp.name.toLowerCase()}|${lp.brand.toLowerCase()}`;
       if (!seen.has(key)) {
         seen.add(key);
-        merged.push(ap);
+        merged.push(lp);
       }
     }
 
