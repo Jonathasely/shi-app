@@ -547,36 +547,33 @@ export default function EventoPage() {
         !selected.includes(p.id)
     ).map((p) => ({ ...p, image: "" }));
 
-    // 3. Merge: match exato no topo, depois Fragella (fotos), depois local
+    // 3. Merge: Fragella (fotos) primeiro, banco local só no final
     const seen = new Set<string>();
     const merged: PerfumeWithImage[] = [];
 
-    // Primeiro: matches exatos de nome (qualquer fonte) — ex: "Angel" = "Angel"
-    const allResults = [...apiFiltered, ...localResults];
-    const exactMatches = allResults.filter((p) => p.name.toLowerCase() === q);
-    const partialApi = apiFiltered.filter((p) => p.name.toLowerCase() !== q);
-    const partialLocal = localResults.filter((p) => p.name.toLowerCase() !== q);
-
-    // Adicionar exatos primeiro (prioriza com imagem)
-    const sortedExact = exactMatches.sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0));
-    for (const p of sortedExact) {
+    // Primeiro: matches exatos da Fragella (com imagem)
+    const exactApi = apiFiltered.filter((p) => p.name.toLowerCase() === q);
+    for (const p of exactApi) {
       const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
       if (!seen.has(key)) { seen.add(key); merged.push(p); }
     }
 
-    // Depois: Fragella (tem fotos)
+    // Depois: demais resultados da Fragella (com fotos)
+    const partialApi = apiFiltered.filter((p) => p.name.toLowerCase() !== q);
     for (const p of partialApi) {
       const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
       if (!seen.has(key)) { seen.add(key); merged.push(p); }
     }
 
-    // Por último: banco local (sem duplicatas)
-    for (const p of partialLocal) {
+    // Por último: banco local (sem duplicatas) — matches exatos primeiro
+    const exactLocal = localResults.filter((p) => p.name.toLowerCase() === q);
+    const partialLocal = localResults.filter((p) => p.name.toLowerCase() !== q);
+    for (const p of [...exactLocal, ...partialLocal]) {
       const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
       if (!seen.has(key)) { seen.add(key); merged.push(p); }
     }
 
-    return merged.slice(0, 10);
+    return merged.slice(0, 20);
   })();
 
   /* ── handlers ────────────────────────────────────────── */
