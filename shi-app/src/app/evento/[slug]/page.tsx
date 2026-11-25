@@ -534,46 +534,11 @@ export default function EventoPage() {
   const filtered = (() => {
     if (searchVal.length < 3) return [];
     const selected = slots.filter(Boolean).map((s) => s!.id);
-    const q = searchVal.toLowerCase();
 
-    // 1. Resultados da API Fragella (principal, com imagens)
-    const apiFiltered = apiResults.filter((p) => !selected.includes(p.id));
-
-    // 2. Busca local — complementa o que a Fragella não encontrou
-    const localResults: PerfumeWithImage[] = DB.filter(
-      (p) =>
-        (p.name.toLowerCase().includes(q) ||
-          p.brand.toLowerCase().includes(q)) &&
-        !selected.includes(p.id)
-    ).map((p) => ({ ...p, image: "" }));
-
-    // 3. Merge: Fragella (fotos) primeiro, banco local só no final
-    const seen = new Set<string>();
-    const merged: PerfumeWithImage[] = [];
-
-    // Primeiro: matches exatos da Fragella (com imagem)
-    const exactApi = apiFiltered.filter((p) => p.name.toLowerCase() === q);
-    for (const p of exactApi) {
-      const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
-      if (!seen.has(key)) { seen.add(key); merged.push(p); }
-    }
-
-    // Depois: demais resultados da Fragella (com fotos)
-    const partialApi = apiFiltered.filter((p) => p.name.toLowerCase() !== q);
-    for (const p of partialApi) {
-      const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
-      if (!seen.has(key)) { seen.add(key); merged.push(p); }
-    }
-
-    // Por último: banco local (sem duplicatas) — matches exatos primeiro
-    const exactLocal = localResults.filter((p) => p.name.toLowerCase() === q);
-    const partialLocal = localResults.filter((p) => p.name.toLowerCase() !== q);
-    for (const p of [...exactLocal, ...partialLocal]) {
-      const key = `${p.name.toLowerCase()}|${p.brand.toLowerCase()}`;
-      if (!seen.has(key)) { seen.add(key); merged.push(p); }
-    }
-
-    return merged.slice(0, 20);
+    // Somente Fragella (com imagens) — banco local desativado por ora
+    return apiResults
+      .filter((p) => !selected.includes(p.id))
+      .slice(0, 20);
   })();
 
   /* ── handlers ────────────────────────────────────────── */
