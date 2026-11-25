@@ -294,22 +294,36 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Uma única chamada com limit=20 (economiza créditos — antes eram 2 chamadas)
-    const url = `${API_BASE}/fragrances?search=${encodeURIComponent(search)}&limit=${limit}&page=1`;
-    const res1 = await fetch(url, {
-      headers: { "x-api-key": API_KEY },
-      next: { revalidate: 3600 },
-    });
+    const limitNum = parseInt(limit, 10) || 20;
 
-    if (!res1.ok) {
-      return NextResponse.json(
-        { error: `Fragella API error: ${res1.status}` },
-        { status: res1.status }
-      );
+    // A API da Fragella pode ter um máximo de 10 por página.
+    // Se pedimos mais que 10, busca 2 páginas (1 crédito cada).
+    const perPage = Math.min(limitNum, 10);
+    const pages = limitNum > 10 ? 2 : 1;
+
+    const fetchPage = async (page: number) => {
+      const url = `${API_BASE}/fragrances?search=${encodeURIComponent(search)}&limit=${perPage}&page=${page}`;
+      const res = await fetch(url, {
+        headers: { "x-api-key": API_KEY },
+        next: { revalidate: 3600 },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : data.data || [];
+    };
+
+    let items: any[];
+    if (pages === 1) {
+      items = await fetchPage(1);
+    } else {
+      // 2 páginas em paralelo — traz até 20 resultados
+      const [p1, p2] = await Promise.all([fetchPage(1), fetchPage(2)]);
+      items = [...p1, ...p2];
     }
 
-    const data1 = await res1.json();
-    const items: any[] = Array.isArray(data1) ? data1 : data1.data || [];
+    if (items.length === 0) {
+      return NextResponse.json({ data: [] });
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const perfumes = items.map((item: any) => {
